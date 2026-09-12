@@ -1,17 +1,32 @@
 <ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>
-      Tab 1
-    </ion-title>
+  <ion-toolbar color="primary">
+    <ion-title>Inicio - Panel Principal</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="logout()">
+        <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Tab 1</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content [fullscreen]="true" class="dashboard-content">
+  <div class="dashboard-wrapper">
+    <div class="welcome-card">
+      <div class="user-avatar">
+        <ion-icon name="person-circle-outline"></ion-icon>
+      </div>
+      <h2>¡Hola, {{ user?.name || 'Usuario' }}!</h2>
+      <p class="user-email">{{ user?.email || 'Sesión Iniciada' }}</p>
 
-  <app-explore-container name="Tab 1 page"></app-explore-container>
+      <div class="status-badge">
+        <span class="dot"></span> Acceso concedido
+      </div>
+
+      <div class="dashboard-actions">
+        <button class="logout-btn" (click)="logout()">
+          <ion-icon name="log-out-outline"></ion-icon> Cerrar Sesión
+        </button>
+      </div>
+    </div>
+  </div>
 </ion-content>

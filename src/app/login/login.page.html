@@ -1,0 +1,119 @@
+<ion-content [fullscreen]="true" class="auth-page-content">
+  <div class="auth-wrapper">
+    <div class="auth-container" [class.sign-in-mode]="!isSignUpMode">
+      
+      <!-- Panel Left: Welcome / Overlay Info Panel -->
+      <div class="auth-panel panel-left">
+        <div class="panel-background-waves">
+          <div class="wave wave1"></div>
+          <div class="wave wave2"></div>
+          <div class="wave wave3"></div>
+        </div>
+
+        <div class="panel-content" *ngIf="isSignUpMode">
+          <h1 class="panel-title">¡Bienvenido de nuevo!</h1>
+          <p class="panel-subtitle">Para mantenerte conectado con nosotros, inicia sesión con tus datos personales</p>
+          <button type="button" class="pill-btn pill-btn-action" (click)="toggleMode(false)">
+            INICIAR SESIÓN
+          </button>
+        </div>
+
+        <div class="panel-content" *ngIf="!isSignUpMode">
+          <h1 class="panel-title">¡Hola, Amigo!</h1>
+          <p class="panel-subtitle">Ingresa tus datos personales y comienza esta experiencia con nosotros</p>
+          <button type="button" class="pill-btn pill-btn-action" (click)="toggleMode(true)">
+            REGISTRARSE
+          </button>
+        </div>
+      </div>
+
+      <!-- Panel Right: Form Panel (Create Account / Sign In) -->
+      <div class="auth-panel panel-right">
+        
+        <!-- Error / Status Message Alert -->
+        <div class="alert-message alert alert-danger" *ngIf="errorMessage">
+          <ion-icon name="alert-circle-outline"></ion-icon> {{ errorMessage }}
+        </div>
+        <div class="alert-message alert alert-success" *ngIf="successMessage">
+          <ion-icon name="checkmark-circle-outline"></ion-icon> {{ successMessage }}
+        </div>
+
+        <!-- Create Account View -->
+        <div class="form-container" *ngIf="isSignUpMode">
+          <h1 class="form-title">Crear Cuenta</h1>
+          
+          <div class="social-container">
+            <a href="javascript:void(0)" class="social-icon">
+              <ion-icon name="logo-facebook"></ion-icon>
+            </a>
+            <a href="javascript:void(0)" class="social-icon">
+              <ion-icon name="logo-google"></ion-icon>
+            </a>
+            <a href="javascript:void(0)" class="social-icon">
+              <ion-icon name="logo-twitter"></ion-icon>
+            </a>
+          </div>
+
+          <span class="form-divider">o usa tu correo para registrarte</span>
+
+          <form (submit)="onSignUp(); $event.preventDefault()" class="auth-form">
+            <div class="input-field">
+              <input type="text" placeholder="Nombre completo" [(ngModel)]="signUpData.name" name="name" required [disabled]="isLoading" />
+            </div>
+
+            <div class="input-field">
+              <input type="email" placeholder="Correo electrónico" [(ngModel)]="signUpData.email" name="email" required [disabled]="isLoading" />
+            </div>
+
+            <div class="input-field">
+              <input type="password" placeholder="Contraseña" [(ngModel)]="signUpData.password" name="password" required [disabled]="isLoading" />
+            </div>
+
+            <button type="submit" class="pill-btn pill-btn-primary" [disabled]="isLoading">
+              <ion-spinner name="crescent" *ngIf="isLoading"></ion-spinner>
+              <span *ngIf="!isLoading">REGISTRARSE</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Sign In View -->
+        <div class="form-container" *ngIf="!isSignUpMode">
+          <h1 class="form-title">Iniciar Sesión</h1>
+          
+          <div class="social-container">
+            <a href="javascript:void(0)" class="social-icon">
+              <ion-icon name="logo-facebook"></ion-icon>
+            </a>
+            <a href="javascript:void(0)" class="social-icon">
+              <ion-icon name="logo-google"></ion-icon>
+            </a>
+            <a href="javascript:void(0)" class="social-icon">
+              <ion-icon name="logo-twitter"></ion-icon>
+            </a>
+          </div>
+
+          <span class="form-divider">o usa tu cuenta registrada</span>
+
+          <form (submit)="onSignIn(); $event.preventDefault()" class="auth-form">
+            <div class="input-field">
+              <input type="email" placeholder="Correo electrónico" [(ngModel)]="signInData.email" name="signInEmail" required [disabled]="isLoading" />
+            </div>
+
+            <div class="input-field">
+              <input type="password" placeholder="Contraseña" [(ngModel)]="signInData.password" name="signInPassword" required [disabled]="isLoading" />
+            </div>
+
+            <a href="javascript:void(0)" class="forgot-link">¿Olvidaste tu contraseña?</a>
+
+            <button type="submit" class="pill-btn pill-btn-primary" [disabled]="isLoading">
+              <ion-spinner name="crescent" *ngIf="isLoading"></ion-spinner>
+              <span *ngIf="!isLoading">INICIAR SESIÓN</span>
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</ion-content>

@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { NavController } from '@ionic/angular';
 
 @Component({
   selector: 'app-tab1',
@@ -6,8 +7,31 @@ import { Component } from '@angular/core';
   styleUrls: ['tab1.page.scss'],
   standalone: false,
 })
-export class Tab1Page {
+export class Tab1Page implements OnInit {
+  user: any = null;
 
-  constructor() {}
+  constructor(private navCtrl: NavController) {}
 
+  ngOnInit() {
+    this.loadUserData();
+  }
+
+  ionViewWillEnter() {
+    this.loadUserData();
+  }
+
+  loadUserData() {
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      this.user = JSON.parse(savedUser);
+    } else {
+      this.user = null;
+    }
+  }
+
+  logout() {
+    localStorage.removeItem('currentUser');
+    this.user = null;
+    this.navCtrl.navigateRoot('/login', { animated: true, animationDirection: 'back' });
+  }
 }
