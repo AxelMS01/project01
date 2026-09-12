@@ -1,17 +1,95 @@
 <ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>
-      Tab 2
-    </ion-title>
+  <ion-toolbar color="primary">
+    <ion-title>Contacto</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Tab 2</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content [fullscreen]="true" class="contact-content">
+  <!-- Carga de Material Icons para la iconografía del formulario -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
-  <app-explore-container name="Tab 2 page"></app-explore-container>
+  <div class="form-wrapper">
+    <ion-card class="contact-card">
+      <div class="card-header-gradient">
+        <h3 class="contact-title">CONTACTO</h3>
+        <p class="contact-subtitle">Envíanos un mensaje y te responderemos pronto</p>
+      </div>
+
+      <ion-card-content class="form-card-content">
+        <form (ngSubmit)="onSubmit()">
+          
+          <!-- Campo Nombre -->
+          <div class="input-group">
+            <i class="material-icons prefix">perm_identity</i>
+            <div class="input-wrapper">
+              <ion-label class="custom-label">Nombre</ion-label>
+              <ion-input 
+                type="text" 
+                name="nombre" 
+                placeholder="Ingresa tu nombre" 
+                [(ngModel)]="contactData.nombre" 
+                required>
+              </ion-input>
+            </div>
+          </div>
+
+          <!-- Campo Apellido -->
+          <div class="input-group">
+            <i class="material-icons prefix">person_pin</i>
+            <div class="input-wrapper">
+              <ion-label class="custom-label">Apellido</ion-label>
+              <ion-input 
+                type="text" 
+                name="apellido" 
+                placeholder="Ingresa tu apellido" 
+                [(ngModel)]="contactData.apellido" 
+                required>
+              </ion-input>
+            </div>
+          </div>
+
+          <!-- Campo Email -->
+          <div class="input-group">
+            <i class="material-icons prefix">email</i>
+            <div class="input-wrapper">
+              <ion-label class="custom-label">Email</ion-label>
+              <ion-input 
+                type="email" 
+                name="email" 
+                placeholder="ejemplo@correo.com" 
+                [(ngModel)]="contactData.email" 
+                required>
+              </ion-input>
+            </div>
+          </div>
+
+          <!-- Campo Mensaje -->
+          <div class="input-group align-start">
+            <i class="material-icons prefix">mode_edit</i>
+            <div class="input-wrapper">
+              <ion-label class="custom-label">Mensaje</ion-label>
+              <ion-textarea 
+                name="mensaje" 
+                rows="4" 
+                maxlength="140" 
+                placeholder="Escribe tu mensaje aquí..." 
+                [(ngModel)]="contactData.mensaje" 
+                required>
+              </ion-textarea>
+            </div>
+          </div>
+
+          <!-- Botón de Envío -->
+          <div class="button-wrapper">
+            <button class="custom-btn waves-effect" type="submit" [disabled]="isLoading">
+              <span *ngIf="!isLoading">ENVIAR</span>
+              <ion-spinner name="crescent" *ngIf="isLoading"></ion-spinner>
+              <i class="material-icons right-icon" *ngIf="!isLoading">send</i>
+            </button>
+          </div>
+
+        </form>
+      </ion-card-content>
+    </ion-card>
+  </div>
 </ion-content>
