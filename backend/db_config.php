@@ -11,8 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Database Credentials for user's XAMPP setup (Port 3307 for MySQL, Port 8080 for Apache)
-$host = "127.0.0.1";
+// Database Credentials for user's XAMPP setup (Port 3307 for MySQL, Port 8088 for Apache)
+$host = "localhost";
 $port = 3307;
 $db_name = "app_db";
 $username = "root";

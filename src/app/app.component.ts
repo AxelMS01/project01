@@ -10,7 +10,11 @@ import {
   personCircleOutline, 
   triangle, 
   ellipse, 
-  square 
+  square,
+  refreshOutline,
+  flashOutline,
+  ribbonOutline,
+  mail
 } from 'ionicons/icons';
 
 @Component({
@@ -29,6 +33,10 @@ export class AppComponent {
       'checkmark-circle-outline': checkmarkCircleOutline,
       'log-out-outline': logOutOutline,
       'person-circle-outline': personCircleOutline,
+      'refresh-outline': refreshOutline,
+      'flash-outline': flashOutline,
+      'ribbon-outline': ribbonOutline,
+      mail,
       triangle,
       ellipse,
       square

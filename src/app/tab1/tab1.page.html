@@ -1,32 +1,173 @@
 <ion-header [translucent]="true">
   <ion-toolbar color="primary">
-    <ion-title>Inicio - Panel Principal</ion-title>
+    <ion-title>Directory - Uma Musume</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="logout()">
-        <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
+      <ion-button (click)="cargarUmas()">
+        <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" class="dashboard-content">
-  <div class="dashboard-wrapper">
-    <div class="welcome-card">
-      <div class="user-avatar">
-        <ion-icon name="person-circle-outline"></ion-icon>
-      </div>
-      <h2>¡Hola, {{ user?.name || 'Usuario' }}!</h2>
-      <p class="user-email">{{ user?.email || 'Sesión Iniciada' }}</p>
+<ion-content [fullscreen]="true" class="ion-padding">
+  <!-- Pull to Refresh -->
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content pullingText="Desliza para actualizar..." refreshingSpinner="crescent"></ion-refresher-content>
+  </ion-refresher>
 
-      <div class="status-badge">
-        <span class="dot"></span> Acceso concedido
-      </div>
-
-      <div class="dashboard-actions">
-        <button class="logout-btn" (click)="logout()">
-          <ion-icon name="log-out-outline"></ion-icon> Cerrar Sesión
-        </button>
-      </div>
-    </div>
+  <!-- Estado de Carga -->
+  <div *ngIf="cargando" class="ion-text-center ion-padding my-loading-container">
+    <ion-spinner name="crescent" color="primary"></ion-spinner>
+    <p>Cargando lista de corredoras...</p>
   </div>
+
+  <!-- Estado de Error -->
+  <div *ngIf="!cargando && errorMensaje" class="ion-padding ion-text-center">
+    <ion-card color="light" class="ion-padding">
+      <ion-icon name="alert-circle-outline" style="font-size: 3rem; color: var(--ion-color-danger);"></ion-icon>
+      <ion-card-header>
+        <ion-card-title>Error de Conexión</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p>{{ errorMensaje }}</p>
+        <ion-button color="primary" fill="solid" size="small" class="ion-margin-top" (click)="cargarUmas()">
+          Reintentar
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Estado Vacío (Sin datos) -->
+  <div *ngIf="!cargando && !errorMensaje && umas.length === 0" class="ion-padding ion-text-center">
+    <ion-card class="ion-padding">
+      <ion-card-header>
+        <ion-card-title>No hay registros disponibles</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p>No se encontraron datos de Uma Musume o la petición a la API retornó una lista vacía.</p>
+        <ion-button color="primary" fill="solid" size="small" class="ion-margin-top" (click)="cargarUmas()">
+          Actualizar datos
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Lista de Uma Musume (Grid Responsivo) -->
+  <ion-grid *ngIf="!cargando && !errorMensaje && umas.length > 0">
+    <ion-row>
+      <ion-col size="12" size-md="6" size-lg="4" *ngFor="let uma of umas">
+        <ion-card class="uma-card">
+          <!-- Imagen Remota de la Uma Musume -->
+          <div class="uma-image-container">
+            <img [src]="uma.imageUrl" [alt]="uma.name" />
+          </div>
+          
+          <ion-card-header>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <ion-card-title>{{ uma.name }}</ion-card-title>
+              <ion-badge color="warning" class="rarity-badge">
+                {{ getRarityStars(uma.rarity) }} ({{ uma.rarity }}★)
+              </ion-badge>
+            </div>
+          </ion-card-header>
+
+          <ion-card-content>
+            <!-- 1. Atributos / Stats Base (Normalizados sobre 1200) -->
+            <div class="section-title">
+              <ion-icon name="flash-outline"></ion-icon>
+              <span>Atributos Base (Máx. 1200)</span>
+            </div>
+            
+            <div class="stat-group">
+              <!-- Velocidad (Speed) -->
+              <div class="stat-header">
+                <span>⚡ Velocidad (Speed)</span>
+                <strong>{{ uma.baseStats.speed }}</strong>
+              </div>
+              <ion-progress-bar [value]="uma.baseStats.speed / 1200" color="primary"></ion-progress-bar>
+
+              <!-- Resistencia (Stamina) -->
+              <div class="stat-header ion-margin-top">
+                <span>❤️ Resistencia (Stamina)</span>
+                <strong>{{ uma.baseStats.stamina }}</strong>
+              </div>
+              <ion-progress-bar [value]="uma.baseStats.stamina / 1200" color="danger"></ion-progress-bar>
+
+              <!-- Potencia (Power) -->
+              <div class="stat-header ion-margin-top">
+                <span>💪 Potencia (Power)</span>
+                <strong>{{ uma.baseStats.power }}</strong>
+              </div>
+              <ion-progress-bar [value]="uma.baseStats.power / 1200" color="warning"></ion-progress-bar>
+
+              <!-- Agallas (Guts) -->
+              <div class="stat-header ion-margin-top">
+                <span>🔥 Agallas (Guts)</span>
+                <strong>{{ uma.baseStats.guts }}</strong>
+              </div>
+              <ion-progress-bar [value]="uma.baseStats.guts / 1200" color="tertiary"></ion-progress-bar>
+
+              <!-- Sabiduría (Wit) -->
+              <div class="stat-header ion-margin-top">
+                <span>🧠 Sabiduría (Wit)</span>
+                <strong>{{ uma.baseStats.wit }}</strong>
+              </div>
+              <ion-progress-bar [value]="uma.baseStats.wit / 1200" color="success"></ion-progress-bar>
+            </div>
+
+            <!-- 2. Aptitudes de Carrera y Crecimiento -->
+            <div class="section-title ion-margin-top">
+              <ion-icon name="ribbon-outline"></ion-icon>
+              <span>Aptitudes y Crecimiento</span>
+            </div>
+
+            <div class="aptitude-sections">
+              <!-- Terreno (Track Aptitude) -->
+              <div class="aptitude-group">
+                <div class="aptitude-sublabel">Terreno (Track Aptitude)</div>
+                <div class="aptitudes-row">
+                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.turf)">Césped (Turf): {{ uma.aptitudes.turf }}</ion-badge>
+                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.dirt)">Arena (Dirt): {{ uma.aptitudes.dirt }}</ion-badge>
+                </div>
+              </div>
+
+              <!-- Distancia (Distance Aptitude) -->
+              <div class="aptitude-group ion-margin-top">
+                <div class="aptitude-sublabel">Distancia (Distance Aptitude)</div>
+                <div class="aptitudes-row">
+                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.short)">Corta (Sprint): {{ uma.aptitudes.short }}</ion-badge>
+                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.mile)">Milla (Mile): {{ uma.aptitudes.mile }}</ion-badge>
+                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.medium)">Media (Med): {{ uma.aptitudes.medium }}</ion-badge>
+                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.long)">Larga (Long): {{ uma.aptitudes.long }}</ion-badge>
+                </div>
+              </div>
+
+              <!-- Estrategia / Ritmo (Pace Aptitude) -->
+              <div class="aptitude-group ion-margin-top">
+                <div class="aptitude-sublabel">Estrategia (Pace Aptitude)</div>
+                <div class="aptitudes-row">
+                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.front)">Escape (Front): {{ uma.aptitudes.front }}</ion-badge>
+                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.leader)">Líder (Pace): {{ uma.aptitudes.leader }}</ion-badge>
+                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.betweener)">Intermedia (Late): {{ uma.aptitudes.betweener }}</ion-badge>
+                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.chaser)">Rematadora (End): {{ uma.aptitudes.chaser }}</ion-badge>
+                </div>
+              </div>
+
+              <!-- Crecimiento de Atributos (Stat Growth) -->
+              <div class="aptitude-group ion-margin-top" *ngIf="uma.growthRates">
+                <div class="aptitude-sublabel">Crecimiento (Stat Growth)</div>
+                <div class="growth-row">
+                  <div class="growth-item"><span>SPD:</span> <strong>+{{ uma.growthRates.speed }}%</strong></div>
+                  <div class="growth-item"><span>STA:</span> <strong>+{{ uma.growthRates.stamina }}%</strong></div>
+                  <div class="growth-item"><span>POW:</span> <strong>+{{ uma.growthRates.power }}%</strong></div>
+                  <div class="growth-item"><span>GUT:</span> <strong>+{{ uma.growthRates.guts }}%</strong></div>
+                  <div class="growth-item"><span>WIT:</span> <strong>+{{ uma.growthRates.wit }}%</strong></div>
+                </div>
+              </div>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 </ion-content>
