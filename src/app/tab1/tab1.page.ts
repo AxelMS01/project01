@@ -1,5 +1,7 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { ToastController } from '@ionic/angular';
 import { UmaService } from '../services/uma.service';
+import { AuthService } from '../services/auth.service';
 import { Uma } from '../models/uma.model';
 
 @Component({
@@ -8,45 +10,96 @@ import { Uma } from '../models/uma.model';
   styleUrls: ['tab1.page.scss'],
   standalone: false,
 })
-export class Tab1Page implements OnInit {
+export class Tab1Page implements OnInit, OnDestroy {
   umas: Uma[] = [];
   cargando: boolean = true;
+  isOffline: boolean = false;
+  showOfflineBanner: boolean = false;
+  cacheTime: string | null = null;
   errorMensaje: string | null = null;
+  private offlineTimer: any = null;
+
+  // Listener para detectar cuando el dispositivo se vuelve a conectar a la red o cable
+  private onlineListener = () => {
+    console.log('Reconexión detectada. Sincronizando datos automáticamente...');
+    this.cargarUmas(false, true);
+  };
 
   constructor(
     private umaService: UmaService,
+    public authService: AuthService,
+    private toastCtrl: ToastController,
     private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
+    window.addEventListener('online', this.onlineListener);
     await this.cargarUmas();
+  }
+
+  ngOnDestroy() {
+    window.removeEventListener('online', this.onlineListener);
+    if (this.offlineTimer) {
+      clearTimeout(this.offlineTimer);
+    }
   }
 
   /**
    * Evento para refrescar la lista con pull-to-refresh
    */
   async doRefresh(event: any) {
-    await this.cargarUmas();
+    await this.cargarUmas(true);
     event.target.complete();
   }
 
   /**
-   * Carga asíncrona de la lista de Uma Musume utilizando Axios y ChangeDetectorRef
+   * Carga de datos con sincronización y fallback offline automático
    */
-  async cargarUmas() {
+  async cargarUmas(isManualRefresh = false, isAutoSync = false) {
     this.cargando = true;
     this.errorMensaje = null;
-    this.cdr.detectChanges(); // Refresca UI para mostrar el spinner
+    this.cdr.detectChanges();
 
     try {
-      this.umas = await this.umaService.getUmas();
+      const result = await this.umaService.getUmas();
+      this.umas = result.data;
+      this.isOffline = result.fromCache;
+      this.cacheTime = result.timestamp || null;
+
+      if (this.isOffline) {
+        // Mostrar aviso temporal y ocultarlo automáticamente después de 4.5 segundos
+        this.showOfflineBanner = true;
+        if (this.offlineTimer) clearTimeout(this.offlineTimer);
+        this.offlineTimer = setTimeout(() => {
+          this.showOfflineBanner = false;
+          this.cdr.detectChanges();
+        }, 4500);
+      } else {
+        this.showOfflineBanner = false;
+      }
+
+      if (!result.fromCache && (isManualRefresh || isAutoSync)) {
+        const toast = await this.toastCtrl.create({
+          message: isAutoSync ? '✅ Conexión recuperada: Datos sincronizados.' : '✅ Datos actualizados con el servidor.',
+          duration: 2500,
+          position: 'top',
+          color: 'success'
+        });
+        await toast.present();
+      } else if (result.fromCache && isManualRefresh) {
+        const toast = await this.toastCtrl.create({
+          message: '📱 Sigues sin conexión. Mostrando datos guardados en el teléfono.',
+          duration: 3000,
+          position: 'top',
+          color: 'warning'
+        });
+        await toast.present();
+      }
     } catch (error) {
-      console.error('Error al conectar con la API de PHP/MySQL:', error);
-      this.errorMensaje = 'No se pudo conectar con el servidor backend. Revisa si XAMPP / Apache está activo.';
+      console.error('Error al conectar y no hay caché disponible:', error);
+      this.errorMensaje = 'No se pudo conectar con el servidor y no hay datos guardados en el teléfono. Conéctate a la red para descargar los datos por primera vez.';
     } finally {
       this.cargando = false;
-      // Axios opera fuera del NgZone de Angular. Es necesario llamar a detectChanges()
-      // en el bloque finally para asegurar que el spinner se oculte y los datos se rendericen de inmediato.
       this.cdr.detectChanges();
     }
   }

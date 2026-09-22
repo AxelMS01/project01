@@ -1,0 +1,56 @@
+.profile-wrapper {
+  max-width: 600px;
+  margin: 0 auto;
+  padding-top: 10px;
+}
+
+.profile-card {
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  padding-bottom: 10px;
+}
+
+.avatar-container {
+  display: flex;
+  justify-content: center;
+  padding-top: 25px;
+}
+
+.avatar-circle {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4b70e2 0%, #3b5bdb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 45px;
+  box-shadow: 0 6px 16px rgba(75, 112, 226, 0.4);
+}
+
+ion-card-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+ion-card-subtitle {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.logout-btn-container {
+  margin-top: 28px;
+  padding: 0 4px;
+}
+
+.logout-btn {
+  --border-radius: 14px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  height: 48px;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+}

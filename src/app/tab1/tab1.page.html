@@ -2,8 +2,11 @@
   <ion-toolbar color="primary">
     <ion-title>Directory - Uma Musume</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="cargarUmas()">
+      <ion-button (click)="cargarUmas()" title="Actualizar">
         <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
+      </ion-button>
+      <ion-button (click)="authService.confirmLogout()" title="Cerrar sesión">
+        <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
@@ -14,6 +17,15 @@
   <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
     <ion-refresher-content pullingText="Desliza para actualizar..." refreshingSpinner="crescent"></ion-refresher-content>
   </ion-refresher>
+
+  <!-- Banner Temporal de Modo Offline (se oculta automáticamente tras unos segundos) -->
+  <div *ngIf="showOfflineBanner && !cargando" class="offline-badge-container ion-text-center ion-margin-bottom">
+    <ion-chip color="warning" class="offline-chip">
+      <ion-icon name="cloud-offline-outline"></ion-icon>
+      <ion-label>Modo sin conexión (datos guardados)</ion-label>
+      <ion-icon name="close-circle" class="close-chip-btn" (click)="showOfflineBanner = false"></ion-icon>
+    </ion-chip>
+  </div>
 
   <!-- Estado de Carga -->
   <div *ngIf="cargando" class="ion-text-center ion-padding my-loading-container">

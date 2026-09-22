@@ -56,7 +56,7 @@
 
           <span class="form-divider">o usa tu correo para registrarte</span>
 
-          <form (submit)="onSignUp(); $event.preventDefault()" class="auth-form">
+          <form (ngSubmit)="onSignUp()" class="auth-form">
             <div class="input-field">
               <input type="text" placeholder="Nombre completo" [(ngModel)]="signUpData.name" name="name" required [disabled]="isLoading" />
             </div>
@@ -73,6 +73,10 @@
               <ion-spinner name="crescent" *ngIf="isLoading"></ion-spinner>
               <span *ngIf="!isLoading">REGISTRARSE</span>
             </button>
+
+            <p class="switch-form-prompt">
+              ¿Ya tienes una cuenta? <a href="javascript:void(0)" (click)="toggleMode(false)">Inicia sesión</a>
+            </p>
           </form>
         </div>
 
@@ -94,7 +98,7 @@
 
           <span class="form-divider">o usa tu cuenta registrada</span>
 
-          <form (submit)="onSignIn(); $event.preventDefault()" class="auth-form">
+          <form (ngSubmit)="onSignIn()" class="auth-form">
             <div class="input-field">
               <input type="email" placeholder="Correo electrónico" [(ngModel)]="signInData.email" name="signInEmail" required [disabled]="isLoading" />
             </div>
@@ -109,6 +113,10 @@
               <ion-spinner name="crescent" *ngIf="isLoading"></ion-spinner>
               <span *ngIf="!isLoading">INICIAR SESIÓN</span>
             </button>
+
+            <p class="switch-form-prompt">
+              ¿No tienes una cuenta? <a href="javascript:void(0)" (click)="toggleMode(true)">Regístrate</a>
+            </p>
           </form>
         </div>
 

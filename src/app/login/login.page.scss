@@ -262,6 +262,26 @@
   }
 }
 
+.switch-form-prompt {
+  margin-top: 20px;
+  margin-bottom: 5px;
+  font-size: 0.88rem;
+  color: #64748b;
+  text-align: center;
+
+  a {
+    color: #4b70e2;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    margin-left: 4px;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
 /* Buttons */
 .pill-btn {
   border: none;

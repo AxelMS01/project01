@@ -1,3 +1,36 @@
+.offline-badge-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.offline-chip {
+  font-weight: 600;
+  font-size: 0.82rem;
+  padding: 8px 16px;
+  border-radius: 20px;
+  box-shadow: 0 3px 10px rgba(234, 179, 8, 0.25);
+  animation: pulse-chip 2s infinite ease-in-out;
+
+  .close-chip-btn {
+    font-size: 1.15rem;
+    margin-left: 8px;
+    cursor: pointer;
+    opacity: 0.75;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+@keyframes pulse-chip {
+  0%, 100% { opacity: 0.92; }
+  50% { opacity: 1; }
+}
+
 .my-loading-container {
   display: flex;
   flex-direction: column;
