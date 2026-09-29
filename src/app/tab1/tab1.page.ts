@@ -2,7 +2,10 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 import { UmaService } from '../services/uma.service';
 import { AuthService } from '../services/auth.service';
-import { Uma } from '../models/uma.model';
+import { Uma, UmaStats } from '../models/uma.model';
+import { flash, heart, barbell, flame, school } from 'ionicons/icons';
+
+type UmaCard = Uma & { statMode: 'base' | 'max' };
 
 @Component({
   selector: 'app-tab1',
@@ -11,7 +14,14 @@ import { Uma } from '../models/uma.model';
   standalone: false,
 })
 export class Tab1Page implements OnInit, OnDestroy {
-  umas: Uma[] = [];
+  readonly statDefinitions: { key: keyof UmaStats; label: string; icon: string }[] = [
+    { key: 'speed', label: 'Speed', icon: flash },
+    { key: 'stamina', label: 'Stamina', icon: heart },
+    { key: 'power', label: 'Power', icon: barbell },
+    { key: 'guts', label: 'Guts', icon: flame },
+    { key: 'wit', label: 'Wit', icon: school }
+  ];
+  umas: UmaCard[] = [];
   cargando: boolean = true;
   isOffline: boolean = false;
   showOfflineBanner: boolean = false;
@@ -61,8 +71,15 @@ export class Tab1Page implements OnInit, OnDestroy {
     this.cdr.detectChanges();
 
     try {
+      // UmaService resuelve el GET /backend/api.php o recupera la copia local.
       const result = await this.umaService.getUmas();
-      this.umas = result.data;
+      // PHP envía rarity; se normaliza para el botón rareza_base★ de cada tarjeta.
+      // Cada carga empieza en la rareza inicial, incluso después de actualizar.
+      this.umas = result.data.map(uma => ({
+        ...uma,
+        rareza_base: uma.rareza_base ?? uma.rarity,
+        statMode: 'base'
+      }));
       this.isOffline = result.fromCache;
       this.cacheTime = result.timestamp || null;
 
@@ -102,6 +119,18 @@ export class Tab1Page implements OnInit, OnDestroy {
       this.cargando = false;
       this.cdr.detectChanges();
     }
+  }
+
+  /**
+   * Selección local: cambiar a 5★ no llama a la API ni altera Growth Rates/aptitudes.
+   * PHP agrupa base_* en baseStats y max_* en maxStats; también se admiten campos sueltos.
+   * null permite mostrar — cuando no hay dato, conservando los ceros válidos.
+   */
+  getStat(uma: UmaCard, stat: keyof UmaStats): number | null {
+    if (uma.statMode === 'max') {
+      return uma[`max_${stat}`] ?? uma.maxStats?.[stat] ?? null;
+    }
+    return uma[`base_${stat}`] ?? uma.baseStats?.[stat] ?? null;
   }
 
   /**

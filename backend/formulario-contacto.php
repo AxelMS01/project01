@@ -1,4 +1,11 @@
 <?php
+/**
+ * POST /backend/formulario-contacto.php desde Tab2Page.onSubmit() o syncPendingMessages().
+ * Entrada JSON (también admite formulario POST): { nombre, apellido, email, mensaje }.
+ * Inserta en contactos; no envía correos. Éxito 201: { status, message, id }.
+ * Errores: 400 campos vacíos, 500 fallo de BD. OPTIONS devuelve 200 sin cuerpo.
+ * Actualmente no se rechazan explícitamente los demás métodos HTTP.
+ */
 // Configuración de encabezados CORS y JSON
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");

@@ -1,4 +1,11 @@
 <?php
+/**
+ * POST /backend/signup.php, consumido por LoginPage.onSignUp().
+ * Entrada JSON: { name, email, password }. Éxito 201: { status, message, user }.
+ * Valida campos y correo, comprueba duplicados y guarda el hash con password_hash().
+ * Errores: 400 validación, 409 correo duplicado, 405 método no permitido, 500 BD.
+ * Tras el registro, Angular vuelve al login; no inicia sesión automáticamente.
+ */
 require_once 'db_config.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

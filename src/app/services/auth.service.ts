@@ -11,6 +11,8 @@ export interface User {
   providedIn: 'root'
 })
 export class AuthService {
+  // Maneja currentUser en localStorage; las peticiones login/signup están en LoginPage.
+  // logout() solo elimina el usuario local: no existe una llamada a logout.php.
 
   constructor(
     private navCtrl: NavController,

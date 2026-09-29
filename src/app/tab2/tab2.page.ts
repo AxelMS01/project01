@@ -21,6 +21,7 @@ export class Tab2Page implements OnInit, OnDestroy {
   isLoading = false;
   private readonly PENDING_KEY = 'offline_pending_contact_messages';
 
+  // Endpoint de escritura: PHP inserta en contactos y devuelve { status, message, id }.
   get apiUrl(): string {
     return `${getApiBaseUrl()}/formulario-contacto.php`;
   }
@@ -44,6 +45,10 @@ export class Tab2Page implements OnInit, OnDestroy {
     window.removeEventListener('online', this.onlineListener);
   }
 
+  /**
+   * POST /backend/formulario-contacto.php con nombre, apellido, email y mensaje.
+   * Envía JSON, espera hasta 6 s y comprueba status=success (HTTP 201).
+   */
   async onSubmit() {
     if (!this.contactData.nombre || !this.contactData.apellido || !this.contactData.email || !this.contactData.mensaje) {
       this.presentToast('Por favor completa todos los campos del formulario.', 'warning');
@@ -72,7 +77,8 @@ export class Tab2Page implements OnInit, OnDestroy {
       this.isLoading = false;
       console.warn('Fallo de red al enviar formulario. Guardando en cola offline...', error);
       
-      // Guardar en cola de salida offline
+      // Este catch también recibe errores HTTP, no solo desconexiones.
+      // Se conserva el mensaje para reintento; date es metadato local que PHP no usa.
       this.saveToOfflineQueue({ ...this.contactData, date: new Date().toLocaleString() });
       this.resetForm();
       
@@ -103,7 +109,9 @@ export class Tab2Page implements OnInit, OnDestroy {
   }
 
   /**
-   * Sincroniza automáticamente los mensajes guardados offline cuando vuelve la red
+   * Reenvía la cola local al iniciar la pantalla y cuando se recibe el evento online.
+   * Conserva las peticiones que lanzan error; actualmente no comprueba el status
+   * del cuerpo JSON de las respuestas resueltas.
    */
   async syncPendingMessages() {
     const queue = this.getOfflineQueue();

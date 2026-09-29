@@ -1,4 +1,11 @@
 <?php
+/**
+ * POST /backend/login.php, consumido por LoginPage.onSignIn() con Axios.
+ * Entrada JSON: { email, password }. Éxito 200: { status, message, user }.
+ * user contiene id, name y email; nunca se devuelve el hash de la contraseña.
+ * Errores: 400 campos ausentes, 401 credenciales incorrectas, 405 método, 500 BD.
+ * Devuelve datos del usuario; no crea una sesión de servidor ni emite un JWT.
+ */
 require_once 'db_config.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -7,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
+// Axios envía application/json; el cuerpo se lee desde php://input, no desde $_POST.
 $input = json_decode(file_get_contents("php://input"), true);
 
 if (empty($input['email']) || empty($input['password'])) {

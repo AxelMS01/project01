@@ -15,7 +15,7 @@ export class LoginPage implements OnInit {
   errorMessage = '';
   successMessage = '';
 
-  // Base URL for the PHP API (dinámica según la plataforma)
+  // URL compartida en api.config.ts; actualmente http://localhost:8088/backend.
   get apiUrl(): string {
     return getApiBaseUrl();
   }
@@ -75,6 +75,11 @@ export class LoginPage implements OnInit {
     };
   }
 
+  /**
+   * POST /login.php con { email, password } en JSON y timeout de 10 s.
+   * La respuesta usa user (no data): { status, message, user: { id, name, email } }.
+   * Los errores HTTP de Axios se consultan en error.response.data.message.
+   */
   async onSignIn() {
     this.errorMessage = '';
     this.successMessage = '';
@@ -98,7 +103,7 @@ export class LoginPage implements OnInit {
       const data = response.data;
 
       if (data && data.status === 'success') {
-        // Guardar la información del usuario localmente
+        // Guardar el usuario para la navegación local; PHP no devuelve un token de sesión.
         localStorage.setItem('currentUser', JSON.stringify(data.user));
         this.successMessage = data.message || 'Inicio de sesión correcto.';
         this.cdr.detectChanges();
@@ -127,6 +132,11 @@ export class LoginPage implements OnInit {
     }
   }
 
+  /**
+   * POST /signup.php con { name, email, password }, JSON y timeout de 10 s.
+   * Un 201 con status=success vuelve al login y conserva el correo introducido.
+   * PHP responde 400 por validación o 409 si el correo ya está registrado.
+   */
   async onSignUp() {
     this.errorMessage = '';
     this.successMessage = '';

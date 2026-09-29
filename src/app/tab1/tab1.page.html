@@ -64,119 +64,77 @@
     </ion-card>
   </div>
 
-  <!-- Lista de Uma Musume (Grid Responsivo) -->
-  <ion-grid *ngIf="!cargando && !errorMensaje && umas.length > 0">
+  <!-- umas proviene de cargarUmas(): respuesta del catálogo o copia local de UmaService. -->
+  <ion-grid class="directory-grid" *ngIf="!cargando && !errorMensaje && umas.length > 0">
     <ion-row>
-      <ion-col size="12" size-md="6" size-lg="4" *ngFor="let uma of umas">
+      <ion-col size="12" size-lg="6" size-xl="4" *ngFor="let uma of umas">
         <ion-card class="uma-card">
-          <!-- Imagen Remota de la Uma Musume -->
           <div class="uma-image-container">
-            <img [src]="uma.imageUrl" [alt]="uma.name" />
+            <img [src]="uma.imageUrl" [alt]="uma.name" loading="lazy" />
           </div>
-          
           <ion-card-header>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="card-heading">
               <ion-card-title>{{ uma.name }}</ion-card-title>
-              <ion-badge color="warning" class="rarity-badge">
-                {{ getRarityStars(uma.rarity) }} ({{ uma.rarity }}★)
+              <ion-badge class="rarity-badge" [attr.aria-label]="(uma.rareza_base ?? uma.rarity) + ' estrellas'">
+                {{ getRarityStars(uma.rareza_base ?? uma.rarity) }}
               </ion-badge>
             </div>
           </ion-card-header>
-
           <ion-card-content>
-            <!-- 1. Atributos / Stats Base (Normalizados sobre 1200) -->
-            <div class="section-title">
-              <ion-icon name="flash-outline"></ion-icon>
-              <span>Atributos Base (Máx. 1200)</span>
+            <div class="stats-heading">
+              <h2>Estadísticas</h2>
+              <!-- El cambio es local: baseStats y maxStats ya llegaron en el mismo GET. -->
+              <ion-segment mode="ios" [(ngModel)]="uma.statMode" aria-label="Rareza de las estadísticas">
+                <ion-segment-button value="base"><ion-label>{{ uma.rareza_base }}★</ion-label></ion-segment-button>
+                <ion-segment-button value="max"><ion-label>5★</ion-label></ion-segment-button>
+              </ion-segment>
             </div>
-            
-            <div class="stat-group">
-              <!-- Velocidad (Speed) -->
-              <div class="stat-header">
-                <span>⚡ Velocidad (Speed)</span>
-                <strong>{{ uma.baseStats.speed }}</strong>
-              </div>
-              <ion-progress-bar [value]="uma.baseStats.speed / 1200" color="primary"></ion-progress-bar>
-
-              <!-- Resistencia (Stamina) -->
-              <div class="stat-header ion-margin-top">
-                <span>❤️ Resistencia (Stamina)</span>
-                <strong>{{ uma.baseStats.stamina }}</strong>
-              </div>
-              <ion-progress-bar [value]="uma.baseStats.stamina / 1200" color="danger"></ion-progress-bar>
-
-              <!-- Potencia (Power) -->
-              <div class="stat-header ion-margin-top">
-                <span>💪 Potencia (Power)</span>
-                <strong>{{ uma.baseStats.power }}</strong>
-              </div>
-              <ion-progress-bar [value]="uma.baseStats.power / 1200" color="warning"></ion-progress-bar>
-
-              <!-- Agallas (Guts) -->
-              <div class="stat-header ion-margin-top">
-                <span>🔥 Agallas (Guts)</span>
-                <strong>{{ uma.baseStats.guts }}</strong>
-              </div>
-              <ion-progress-bar [value]="uma.baseStats.guts / 1200" color="tertiary"></ion-progress-bar>
-
-              <!-- Sabiduría (Wit) -->
-              <div class="stat-header ion-margin-top">
-                <span>🧠 Sabiduría (Wit)</span>
-                <strong>{{ uma.baseStats.wit }}</strong>
-              </div>
-              <ion-progress-bar [value]="uma.baseStats.wit / 1200" color="success"></ion-progress-bar>
-            </div>
-
-            <!-- 2. Aptitudes de Carrera y Crecimiento -->
-            <div class="section-title ion-margin-top">
-              <ion-icon name="ribbon-outline"></ion-icon>
-              <span>Aptitudes y Crecimiento</span>
-            </div>
-
-            <div class="aptitude-sections">
-              <!-- Terreno (Track Aptitude) -->
-              <div class="aptitude-group">
-                <div class="aptitude-sublabel">Terreno (Track Aptitude)</div>
-                <div class="aptitudes-row">
-                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.turf)">Césped (Turf): {{ uma.aptitudes.turf }}</ion-badge>
-                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.dirt)">Arena (Dirt): {{ uma.aptitudes.dirt }}</ion-badge>
-                </div>
-              </div>
-
-              <!-- Distancia (Distance Aptitude) -->
-              <div class="aptitude-group ion-margin-top">
-                <div class="aptitude-sublabel">Distancia (Distance Aptitude)</div>
-                <div class="aptitudes-row">
-                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.short)">Corta (Sprint): {{ uma.aptitudes.short }}</ion-badge>
-                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.mile)">Milla (Mile): {{ uma.aptitudes.mile }}</ion-badge>
-                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.medium)">Media (Med): {{ uma.aptitudes.medium }}</ion-badge>
-                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.long)">Larga (Long): {{ uma.aptitudes.long }}</ion-badge>
-                </div>
-              </div>
-
-              <!-- Estrategia / Ritmo (Pace Aptitude) -->
-              <div class="aptitude-group ion-margin-top">
-                <div class="aptitude-sublabel">Estrategia (Pace Aptitude)</div>
-                <div class="aptitudes-row">
-                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.front)">Escape (Front): {{ uma.aptitudes.front }}</ion-badge>
-                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.leader)">Líder (Pace): {{ uma.aptitudes.leader }}</ion-badge>
-                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.betweener)">Intermedia (Late): {{ uma.aptitudes.betweener }}</ion-badge>
-                  <ion-badge [color]="getAptitudeColor(uma.aptitudes.chaser)">Rematadora (End): {{ uma.aptitudes.chaser }}</ion-badge>
-                </div>
-              </div>
-
-              <!-- Crecimiento de Atributos (Stat Growth) -->
-              <div class="aptitude-group ion-margin-top" *ngIf="uma.growthRates">
-                <div class="aptitude-sublabel">Crecimiento (Stat Growth)</div>
-                <div class="growth-row">
-                  <div class="growth-item"><span>SPD:</span> <strong>+{{ uma.growthRates.speed }}%</strong></div>
-                  <div class="growth-item"><span>STA:</span> <strong>+{{ uma.growthRates.stamina }}%</strong></div>
-                  <div class="growth-item"><span>POW:</span> <strong>+{{ uma.growthRates.power }}%</strong></div>
-                  <div class="growth-item"><span>GUT:</span> <strong>+{{ uma.growthRates.guts }}%</strong></div>
-                  <div class="growth-item"><span>WIT:</span> <strong>+{{ uma.growthRates.wit }}%</strong></div>
-                </div>
+            <div class="stat-grid" aria-live="polite">
+              <div class="stat-tile" *ngFor="let stat of statDefinitions" [attr.data-stat]="stat.key">
+                <span class="stat-label"><ion-icon [icon]="stat.icon" aria-hidden="true"></ion-icon>{{ stat.label }}</span>
+                <strong>{{ getStat(uma, stat.key) ?? '—' }}</strong>
               </div>
             </div>
+            <section class="growth-section" *ngIf="uma.growthRates" aria-label="Growth Rates">
+              <h2>Growth Rates</h2>
+              <div class="growth-row">
+                <div class="growth-chip" *ngFor="let stat of statDefinitions" [attr.data-stat]="stat.key" [class.is-zero]="uma.growthRates[stat.key] === 0">
+                  <ion-icon [icon]="stat.icon" aria-hidden="true"></ion-icon>
+                  <span>{{ stat.label }}</span>
+                  <strong>+{{ uma.growthRates[stat.key] }}%</strong>
+                </div>
+              </div>
+            </section>
+            <section class="aptitude-section" aria-label="Aptitudes">
+              <h2>Aptitudes</h2>
+              <div class="aptitude-grid">
+                <div class="aptitude-group">
+                  <h3>Terreno</h3>
+                  <div class="aptitudes-row">
+                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.turf"><span>Turf</span><strong>{{ uma.aptitudes.turf }}</strong></span>
+                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.dirt"><span>Dirt</span><strong>{{ uma.aptitudes.dirt }}</strong></span>
+                  </div>
+                </div>
+                <div class="aptitude-group">
+                  <h3>Distancia</h3>
+                  <div class="aptitudes-row">
+                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.short"><span>Short</span><strong>{{ uma.aptitudes.short }}</strong></span>
+                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.mile"><span>Mile</span><strong>{{ uma.aptitudes.mile }}</strong></span>
+                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.medium"><span>Medium</span><strong>{{ uma.aptitudes.medium }}</strong></span>
+                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.long"><span>Long</span><strong>{{ uma.aptitudes.long }}</strong></span>
+                  </div>
+                </div>
+                <div class="aptitude-group">
+                  <h3>Estrategia</h3>
+                  <div class="aptitudes-row">
+                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.front"><span>Front</span><strong>{{ uma.aptitudes.front }}</strong></span>
+                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.leader"><span>Leader</span><strong>{{ uma.aptitudes.leader }}</strong></span>
+                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.betweener"><span>Betweener</span><strong>{{ uma.aptitudes.betweener }}</strong></span>
+                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.chaser"><span>Chaser</span><strong>{{ uma.aptitudes.chaser }}</strong></span>
+                  </div>
+                </div>
+              </div>
+            </section>
           </ion-card-content>
         </ion-card>
       </ion-col>

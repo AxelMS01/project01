@@ -1,4 +1,11 @@
 <?php
+/**
+ * Archivo compartido por los endpoints, no una operación de negocio para Angular.
+ * Configura JSON/CORS y conecta PHP a MySQL mediante PDO en el puerto 3307.
+ * El frontend llama a Apache en el puerto 8088; nunca se conecta directamente a MySQL.
+ * Las peticiones OPTIONS de CORS terminan aquí sin ejecutar consultas de negocio.
+ * La configuración de conexión se mantiene exclusivamente en el backend.
+ */
 // Header configurations for CORS & JSON
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");

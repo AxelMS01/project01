@@ -3,6 +3,7 @@ import axios, { AxiosInstance } from 'axios';
 import { Uma, ApiResponse } from '../models/uma.model';
 import { getApiBaseUrl } from './api.config';
 
+// Resultado interno del servicio; fromCache y timestamp no vienen del contrato PHP.
 export interface UmaFetchResult {
   data: Uma[];
   fromCache: boolean;
@@ -18,6 +19,7 @@ export class UmaService {
   private readonly CACHE_TIME_KEY = 'offline_cached_umas_timestamp';
 
   constructor() {
+    // Cliente del catálogo: URL base /backend, intercambio JSON y espera máxima de 8 s.
     this.api = axios.create({
       baseURL: getApiBaseUrl(),
       timeout: 8000,
@@ -29,15 +31,16 @@ export class UmaService {
   }
 
   /**
-   * Obtiene la lista de Uma Musume con soporte Offline-First:
-   * 1. Intenta conectarse al backend PHP/MySQL.
-   * 2. Si hay conexión: guarda copia fresca en localStorage y devuelve los datos del servidor.
-   * 3. Si no hay conexión (sin cable / sin Wi-Fi): lee y devuelve la copia guardada en el teléfono.
+   * GET /backend/api.php: intenta primero la red y guarda el catálogo en localStorage.
+   * Si falla (red, timeout o error HTTP), usa la copia local no vacía si existe.
+   * Sin respuesta ni caché, propaga el error para que Tab1Page lo muestre.
    */
   async getUmas(): Promise<UmaFetchResult> {
     try {
       this.api.defaults.baseURL = getApiBaseUrl();
       const response = await this.api.get<ApiResponse<Uma[]>>('/api.php');
+      // response.data es el JSON de Axios; response.data.data es el arreglo del PHP.
+      // ApiResponse<Uma[]> describe tipos, pero no valida el cuerpo en ejecución.
       
       if (response.data && response.data.status === 'success' && Array.isArray(response.data.data)) {
         const umas = response.data.data;
@@ -72,6 +75,7 @@ export class UmaService {
   }
 
   private saveToCache(umas: Uma[]): void {
+    // Guarda también baseStats y maxStats; la fecha es local, no enviada por el servidor.
     try {
       localStorage.setItem(this.CACHE_KEY, JSON.stringify(umas));
       localStorage.setItem(this.CACHE_TIME_KEY, new Date().toLocaleString());
