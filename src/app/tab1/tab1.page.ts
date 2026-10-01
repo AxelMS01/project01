@@ -1,5 +1,7 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
+import { ImageCacheService } from '../services/image-cache.service';
 import { ToastController } from '@ionic/angular';
+import { dataErrorMessage } from '../services/data-error';
 import { UmaService } from '../services/uma.service';
 import { AuthService } from '../services/auth.service';
 import { Uma, UmaStats } from '../models/uma.model';
@@ -14,6 +16,8 @@ type UmaCard = Uma & { statMode: 'base' | 'max' };
   standalone: false,
 })
 export class Tab1Page implements OnInit, OnDestroy {
+  readonly imageCache = inject(ImageCacheService);
+  imageStatus: string | null = null;
   readonly statDefinitions: { key: keyof UmaStats; label: string; icon: string }[] = [
     { key: 'speed', label: 'Speed', icon: flash },
     { key: 'stamina', label: 'Stamina', icon: heart },
@@ -27,7 +31,9 @@ export class Tab1Page implements OnInit, OnDestroy {
   showOfflineBanner: boolean = false;
   cacheTime: string | null = null;
   errorMensaje: string | null = null;
-  private offlineTimer: any = null;
+  statusMessage: string | null = null;
+  private loadingRequest = false;
+  private destroyed = false;
 
   // Listener para detectar cuando el dispositivo se vuelve a conectar a la red o cable
   private onlineListener = () => {
@@ -49,9 +55,7 @@ export class Tab1Page implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     window.removeEventListener('online', this.onlineListener);
-    if (this.offlineTimer) {
-      clearTimeout(this.offlineTimer);
-    }
+    this.destroyed = true;
   }
 
   /**
@@ -66,13 +70,17 @@ export class Tab1Page implements OnInit, OnDestroy {
    * Carga de datos con sincronización y fallback offline automático
    */
   async cargarUmas(isManualRefresh = false, isAutoSync = false) {
+    if (this.loadingRequest) return;
+    this.loadingRequest = true;
     this.cargando = true;
     this.errorMensaje = null;
+    this.imageStatus = null;
     this.cdr.detectChanges();
 
     try {
       // UmaService resuelve el GET /backend/api.php o recupera la copia local.
       const result = await this.umaService.getUmas();
+      if (this.destroyed) return;
       // PHP envía rarity; se normaliza para el botón rareza_base★ de cada tarjeta.
       // Cada carga empieza en la rareza inicial, incluso después de actualizar.
       this.umas = result.data.map(uma => ({
@@ -83,17 +91,9 @@ export class Tab1Page implements OnInit, OnDestroy {
       this.isOffline = result.fromCache;
       this.cacheTime = result.timestamp || null;
 
-      if (this.isOffline) {
-        // Mostrar aviso temporal y ocultarlo automáticamente después de 4.5 segundos
-        this.showOfflineBanner = true;
-        if (this.offlineTimer) clearTimeout(this.offlineTimer);
-        this.offlineTimer = setTimeout(() => {
-          this.showOfflineBanner = false;
-          this.cdr.detectChanges();
-        }, 4500);
-      } else {
-        this.showOfflineBanner = false;
-      }
+      this.showOfflineBanner = result.fromCache;
+      this.statusMessage = result.warning || null;
+      this.imageStatus = result.imageStatus || null;
 
       if (!result.fromCache && (isManualRefresh || isAutoSync)) {
         const toast = await this.toastCtrl.create({
@@ -105,7 +105,7 @@ export class Tab1Page implements OnInit, OnDestroy {
         await toast.present();
       } else if (result.fromCache && isManualRefresh) {
         const toast = await this.toastCtrl.create({
-          message: '📱 Sigues sin conexión. Mostrando datos guardados en el teléfono.',
+          message: 'No se pudo actualizar. Mostrando la última copia guardada.',
           duration: 3000,
           position: 'top',
           color: 'warning'
@@ -114,10 +114,11 @@ export class Tab1Page implements OnInit, OnDestroy {
       }
     } catch (error) {
       console.error('Error al conectar y no hay caché disponible:', error);
-      this.errorMensaje = 'No se pudo conectar con el servidor y no hay datos guardados en el teléfono. Conéctate a la red para descargar los datos por primera vez.';
+      this.errorMensaje = dataErrorMessage(error);
     } finally {
       this.cargando = false;
-      this.cdr.detectChanges();
+      this.loadingRequest = false;
+      if (!this.destroyed) this.cdr.detectChanges();
     }
   }
 
@@ -136,6 +137,11 @@ export class Tab1Page implements OnInit, OnDestroy {
   /**
    * Genera la representación en estrellas según la rareza de la Uma Musume
    */
+  onImageError(event: Event) {
+    const image = event.target as HTMLImageElement;
+    if (!image.src.endsWith('/assets/shapes.svg')) image.src = 'assets/shapes.svg';
+  }
+
   getRarityStars(rarity: number): string {
     return '★'.repeat(rarity);
   }

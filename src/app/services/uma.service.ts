@@ -1,100 +1,98 @@
-import { Injectable } from '@angular/core';
-import axios, { AxiosInstance } from 'axios';
-import { Uma, ApiResponse } from '../models/uma.model';
+﻿import { Injectable } from '@angular/core';
+import axios from 'axios';
+import { inject } from '@angular/core';
+import { Uma } from '../models/uma.model';
 import { getApiBaseUrl } from './api.config';
+import { ConnectionService } from './connection.service';
+import { DataError, dataErrorMessage } from './data-error';
+import { ImageCacheService } from './image-cache.service';
 
-// Resultado interno del servicio; fromCache y timestamp no vienen del contrato PHP.
 export interface UmaFetchResult {
   data: Uma[];
   fromCache: boolean;
-  timestamp?: string | null;
+  timestamp: string | null;
+  warning?: string;
+  imageStatus?: string;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+const CACHE_KEY = 'offline_cached_umas';
+
+/** Valida los campos obligatorios para renderizar datos de red y caché. */
+function isUmaList(value: unknown): value is Uma[] {
+  return Array.isArray(value) && value.every(uma =>
+    uma && Number.isInteger(uma.id) && typeof uma.name === 'string' &&
+    Number.isInteger(uma.rarity) && uma.rarity >= 0 && uma.rarity <= 5 &&
+    (uma.rareza_base === undefined || (Number.isInteger(uma.rareza_base) && uma.rareza_base >= 0 && uma.rareza_base <= 5)) &&
+    typeof uma.imageUrl === 'string' && uma.aptitudes &&
+    ['turf', 'dirt', 'short', 'mile', 'medium', 'long', 'front', 'leader', 'betweener', 'chaser']
+      .every(key => typeof uma.aptitudes[key] === 'string')
+  );
+}
+
+@Injectable({ providedIn: 'root' })
 export class UmaService {
-  private api: AxiosInstance;
-  private readonly CACHE_KEY = 'offline_cached_umas';
-  private readonly CACHE_TIME_KEY = 'offline_cached_umas_timestamp';
+  private readonly api = axios.create({ timeout: 8000 });
 
-  constructor() {
-    // Cliente del catálogo: URL base /backend, intercambio JSON y espera máxima de 8 s.
-    this.api = axios.create({
-      baseURL: getApiBaseUrl(),
-      timeout: 8000,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
-    });
-  }
+  private readonly connection = inject(ConnectionService);
+  private readonly images = inject(ImageCacheService);
 
-  /**
-   * GET /backend/api.php: intenta primero la red y guarda el catálogo en localStorage.
-   * Si falla (red, timeout o error HTTP), usa la copia local no vacía si existe.
-   * Sin respuesta ni caché, propaga el error para que Tab1Page lo muestre.
-   */
+  /** Red primero; ante desconexión o fallo usa la última copia válida, incluso vacía. */
   async getUmas(): Promise<UmaFetchResult> {
     try {
-      this.api.defaults.baseURL = getApiBaseUrl();
-      const response = await this.api.get<ApiResponse<Uma[]>>('/api.php');
-      // response.data es el JSON de Axios; response.data.data es el arreglo del PHP.
-      // ApiResponse<Uma[]> describe tipos, pero no valida el cuerpo en ejecución.
-      
-      if (response.data && response.data.status === 'success' && Array.isArray(response.data.data)) {
-        const umas = response.data.data;
-        this.saveToCache(umas);
-        return {
-          data: umas,
-          fromCache: false,
-          timestamp: new Date().toLocaleTimeString()
-        };
+      if (!this.connection.online()) throw new DataError('Sin conexión a la red.');
+      const response = await this.api.get(`${getApiBaseUrl()}/api.php`);
+      if (response.data?.status !== 'success' || !isUmaList(response.data.data)) {
+        throw new DataError('El servidor devolvió datos inválidos. Intenta de nuevo más tarde.');
       }
-      
-      const fallbackList = response.data?.data || [];
-      if (fallbackList.length > 0) {
-        this.saveToCache(fallbackList);
+      const result: UmaFetchResult = {
+        data: response.data.data, fromCache: false, timestamp: new Date().toISOString()
+      };
+      try {
+        // Una escritura mantiene unidos los datos y su fecha.
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ version: 1, data: result.data, timestamp: result.timestamp }));
+      } catch {
+        result.warning = 'Datos actualizados, pero no se pudo guardar una copia para usar sin conexión.';
       }
-      return { data: fallbackList, fromCache: false };
+      return this.withImages(result, true, !result.warning);
     } catch (error) {
-      console.warn('Conexión con el servidor no disponible. Cargando copia en caché del teléfono...', error);
-      
-      const cached = this.getFromCache();
-      if (cached && cached.length > 0) {
-        return {
-          data: cached,
-          fromCache: true,
-          timestamp: this.getCacheTimestamp()
-        };
+      const cached = this.readCache();
+      if (cached) return this.withImages({ ...cached, fromCache: true, warning: dataErrorMessage(error) }, false, true);
+      throw new DataError(`${dataErrorMessage(error)} No hay una copia local válida. Conéctate y pulsa Reintentar para descargar el catálogo.`);
+    }
+  }
+
+  private async withImages(result: UmaFetchResult, refresh: boolean, catalogSaved: boolean): Promise<UmaFetchResult> {
+    try {
+      const images = await this.images.prepare(result.data, refresh);
+      result.data = images.data;
+      const missing = images.total - images.saved;
+      result.imageStatus = missing > 0
+        ? `Imágenes guardadas: ${images.saved} de ${images.total}. Conéctate y pulsa Actualizar para completar la descarga.`
+        : catalogSaved ? 'Catálogo e imágenes disponibles sin conexión.' : 'Imágenes guardadas; falta guardar el catálogo.';
+      if (images.failed > 0 && missing === 0) {
+        result.imageStatus += ' No se pudieron actualizar todas las imágenes; se conservaron las copias anteriores.';
       }
-
-      // Si no hay datos en caché en el dispositivo, propagar error
-      throw error;
+    } catch {
+      result.imageStatus = 'No se pudo acceder a las imágenes guardadas. Pulsa Actualizar para reintentar.';
     }
+    return result;
   }
 
-  private saveToCache(umas: Uma[]): void {
-    // Guarda también baseStats y maxStats; la fecha es local, no enviada por el servidor.
+  private readCache(): { data: Uma[]; timestamp: string | null } | null {
     try {
-      localStorage.setItem(this.CACHE_KEY, JSON.stringify(umas));
-      localStorage.setItem(this.CACHE_TIME_KEY, new Date().toLocaleString());
-    } catch (e) {
-      console.error('Error al guardar en caché local:', e);
-    }
-  }
-
-  public getFromCache(): Uma[] | null {
-    try {
-      const data = localStorage.getItem(this.CACHE_KEY);
-      return data ? JSON.parse(data) : null;
-    } catch (e) {
-      console.error('Error al leer caché local:', e);
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (raw === null) return null;
+      const saved = JSON.parse(raw);
+      // Compatibilidad con la caché anterior a la versión 1.
+      if (isUmaList(saved)) return { data: saved, timestamp: localStorage.getItem('offline_cached_umas_timestamp') };
+      if (saved?.version !== 1 || !isUmaList(saved.data) ||
+          typeof saved.timestamp !== 'string' || !Number.isFinite(Date.parse(saved.timestamp))) return null;
+      return { data: saved.data, timestamp: new Date(saved.timestamp).toLocaleString() };
+    } catch {
       return null;
     }
   }
 
-  public getCacheTimestamp(): string | null {
-    return localStorage.getItem(this.CACHE_TIME_KEY);
-  }
+  getFromCache(): Uma[] | null { return this.readCache()?.data ?? null; }
+  getCacheTimestamp(): string | null { return this.readCache()?.timestamp ?? null; }
 }

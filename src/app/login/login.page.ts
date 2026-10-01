@@ -2,6 +2,8 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { NavController } from '@ionic/angular';
 import { getApiBaseUrl } from '../services/api.config';
 import axios from 'axios';
+import { ConnectionService } from '../services/connection.service';
+import { dataErrorMessage } from '../services/data-error';
 
 @Component({
   selector: 'app-login',
@@ -33,7 +35,8 @@ export class LoginPage implements OnInit {
 
   constructor(
     private navCtrl: NavController,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    public connection: ConnectionService
   ) { }
 
   ngOnInit() { }
@@ -81,6 +84,11 @@ export class LoginPage implements OnInit {
    * Los errores HTTP de Axios se consultan en error.response.data.message.
    */
   async onSignIn() {
+    if (this.isLoading) return;
+    if (!this.connection.online()) {
+      this.errorMessage = 'Necesitas conexión para iniciar sesión o crear una cuenta. Tus datos siguen en el formulario.';
+      return;
+    }
     this.errorMessage = '';
     this.successMessage = '';
 
@@ -114,17 +122,8 @@ export class LoginPage implements OnInit {
         this.errorMessage = (data && data.message) ? data.message : 'Credenciales inválidas.';
         this.cdr.detectChanges();
       }
-    } catch (error: any) {
-      console.error('Error al conectar con la API de PHP vía Axios:', error);
-      if (error.code === 'ECONNABORTED') {
-        this.errorMessage = 'Tiempo de espera agotado (10s). Revisa si Apache y la IP son alcanzables.';
-      } else if (error.response && error.response.data && error.response.data.message) {
-        this.errorMessage = error.response.data.message;
-      } else if (error.message) {
-        this.errorMessage = `Error de conexión: ${error.message}. Verifica que el teléfono y la PC compartan Wi-Fi y Apache esté en puerto 8088.`;
-      } else {
-        this.errorMessage = 'No se pudo conectar con el servidor PHP (XAMPP).';
-      }
+    } catch (error: unknown) {
+      this.errorMessage = dataErrorMessage(error);
       this.cdr.detectChanges();
     } finally {
       this.isLoading = false;
@@ -138,6 +137,11 @@ export class LoginPage implements OnInit {
    * PHP responde 400 por validación o 409 si el correo ya está registrado.
    */
   async onSignUp() {
+    if (this.isLoading) return;
+    if (!this.connection.online()) {
+      this.errorMessage = 'Necesitas conexión para iniciar sesión o crear una cuenta. Tus datos siguen en el formulario.';
+      return;
+    }
     this.errorMessage = '';
     this.successMessage = '';
 
@@ -173,17 +177,8 @@ export class LoginPage implements OnInit {
         this.errorMessage = (data && data.message) ? data.message : 'Error al registrar el usuario.';
         this.cdr.detectChanges();
       }
-    } catch (error: any) {
-      console.error('Error al registrar usuario vía Axios:', error);
-      if (error.code === 'ECONNABORTED') {
-        this.errorMessage = 'Tiempo de espera agotado (10s). Revisa si la IP de tu PC y Apache están activos.';
-      } else if (error.response && error.response.data && error.response.data.message) {
-        this.errorMessage = error.response.data.message;
-      } else if (error.message) {
-        this.errorMessage = `Error: ${error.message}. Verifica que el teléfono y PC estén en el mismo Wi-Fi y Apache en 8088.`;
-      } else {
-        this.errorMessage = 'Error al registrar usuario. Verifica la conexión con el servidor.';
-      }
+    } catch (error: unknown) {
+      this.errorMessage = dataErrorMessage(error);
       this.cdr.detectChanges();
     } finally {
       this.isLoading = false;

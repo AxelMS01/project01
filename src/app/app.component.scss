@@ -1,0 +1,10 @@
+.connection-banner {
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px;
+  background: var(--ion-color-warning, #ffc409);
+  color: #171717;
+  text-align: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+ion-router-outlet { position: relative; flex: 1; }

@@ -1,8 +1,19 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+﻿import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 import { AuthService } from '../services/auth.service';
+import { ConnectionService } from '../services/connection.service';
+import { DataError, dataErrorMessage } from '../services/data-error';
 import { getApiBaseUrl } from '../services/api.config';
 import axios from 'axios';
+
+interface ContactMessage {
+  nombre: string;
+  apellido: string;
+  email: string;
+  mensaje: string;
+  date?: string;
+  needsReview?: boolean;
+}
 
 @Component({
   selector: 'app-tab2',
@@ -11,149 +22,133 @@ import axios from 'axios';
   standalone: false,
 })
 export class Tab2Page implements OnInit, OnDestroy {
-  contactData = {
-    nombre: '',
-    apellido: '',
-    email: '',
-    mensaje: ''
-  };
-
+  contactData: ContactMessage = { nombre: '', apellido: '', email: '', mensaje: '' };
   isLoading = false;
+  pendingCount = 0;
+  statusMessage = '';
+  private destroyed = false;
   private readonly PENDING_KEY = 'offline_pending_contact_messages';
 
-  // Endpoint de escritura: PHP inserta en contactos y devuelve { status, message, id }.
-  get apiUrl(): string {
-    return `${getApiBaseUrl()}/formulario-contacto.php`;
-  }
-
-  private onlineListener = () => {
-    this.syncPendingMessages();
-  };
+  get apiUrl(): string { return `${getApiBaseUrl()}/formulario-contacto.php`; }
+  private readonly onlineListener = () => { void this.syncPendingMessages(); };
 
   constructor(
     private toastCtrl: ToastController,
-    public authService: AuthService
+    public authService: AuthService,
+    public connection: ConnectionService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     window.addEventListener('online', this.onlineListener);
-    // Intentar sincronizar si quedaron mensajes pendientes de una sesión anterior
-    this.syncPendingMessages();
+    void this.syncPendingMessages();
   }
 
   ngOnDestroy() {
+    this.destroyed = true;
     window.removeEventListener('online', this.onlineListener);
   }
 
-  /**
-   * POST /backend/formulario-contacto.php con nombre, apellido, email y mensaje.
-   * Envía JSON, espera hasta 6 s y comprueba status=success (HTTP 201).
-   */
   async onSubmit() {
-    if (!this.contactData.nombre || !this.contactData.apellido || !this.contactData.email || !this.contactData.mensaje) {
-      this.presentToast('Por favor completa todos los campos del formulario.', 'warning');
+    if (this.isLoading) return;
+    const message = { ...this.contactData };
+    if (![message.nombre, message.apellido, message.email, message.mensaje].every(value => value.trim()) ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(message.email)) {
+      await this.presentToast('Completa todos los campos e ingresa un correo válido.', 'warning');
       return;
     }
-
     this.isLoading = true;
-
     try {
-      const response = await axios.post(this.apiUrl, this.contactData, {
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        timeout: 6000
-      });
-
-      this.isLoading = false;
-
-      if (response.data && response.data.status === 'success') {
-        this.presentToast(response.data.message || 'Mensaje enviado exitosamente.', 'success');
+      if (!this.connection.online()) {
+        const queue = this.getOfflineQueue();
+        queue.push({ ...message, date: new Date().toISOString() });
+        this.saveQueue(queue); // Si falla, no se borra el formulario.
         this.resetForm();
+        this.statusMessage = 'Mensaje guardado en este dispositivo. Se intentará enviar al recuperar la conexión y abrir Contacto.';
+        await this.presentToast(this.statusMessage, 'warning');
       } else {
-        this.presentToast(response.data.message || 'Error al enviar el mensaje.', 'danger');
+        await this.send(message);
+        this.resetForm();
+        this.statusMessage = 'Mensaje enviado correctamente.';
+        await this.presentToast(this.statusMessage, 'success');
       }
-    } catch (error: any) {
+    } catch (error) {
+      this.statusMessage = `${dataErrorMessage(error)} El formulario se conserva. Si no recibiste confirmación, verifica el envío antes de reintentarlo.`;
+      await this.presentToast(this.statusMessage, 'danger');
+    } finally {
       this.isLoading = false;
-      console.warn('Fallo de red al enviar formulario. Guardando en cola offline...', error);
-      
-      // Este catch también recibe errores HTTP, no solo desconexiones.
-      // Se conserva el mensaje para reintento; date es metadato local que PHP no usa.
-      this.saveToOfflineQueue({ ...this.contactData, date: new Date().toLocaleString() });
-      this.resetForm();
-      
-      this.presentToast(
-        '📱 Estás sin conexión. Tu mensaje se guardó en el teléfono y se enviará automáticamente al reconectarte.',
-        'warning'
-      );
+      if (!this.destroyed) this.cdr.detectChanges();
     }
   }
 
-  private saveToOfflineQueue(msg: any): void {
-    try {
-      const queue = this.getOfflineQueue();
-      queue.push(msg);
-      localStorage.setItem(this.PENDING_KEY, JSON.stringify(queue));
-    } catch (e) {
-      console.error('Error al guardar mensaje offline:', e);
+  private async send(message: ContactMessage) {
+    const { nombre, apellido, email, mensaje } = message;
+    const response = await axios.post(this.apiUrl, { nombre, apellido, email, mensaje }, { timeout: 6000 });
+    if (response.data?.status !== 'success') {
+      throw new DataError('El servidor no confirmó el envío del mensaje.');
     }
   }
 
-  private getOfflineQueue(): any[] {
+  private getOfflineQueue(): ContactMessage[] {
     try {
       const raw = localStorage.getItem(this.PENDING_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      return [];
+      const queue: unknown = raw === null ? [] : JSON.parse(raw);
+      if (!Array.isArray(queue) || !queue.every(msg => msg &&
+        ['nombre', 'apellido', 'email', 'mensaje'].every(key => typeof msg[key] === 'string'))) throw new Error();
+      this.pendingCount = queue.length;
+      return queue;
+    } catch {
+      throw new DataError('No se pudieron leer los mensajes guardados. No se modificó el almacenamiento.');
     }
   }
 
-  /**
-   * Reenvía la cola local al iniciar la pantalla y cuando se recibe el evento online.
-   * Conserva las peticiones que lanzan error; actualmente no comprueba el status
-   * del cuerpo JSON de las respuestas resueltas.
-   */
-  async syncPendingMessages() {
-    const queue = this.getOfflineQueue();
-    if (queue.length === 0) return;
+  private saveQueue(queue: ContactMessage[]) {
+    try {
+      localStorage.setItem(this.PENDING_KEY, JSON.stringify(queue));
+      this.pendingCount = queue.length;
+    } catch {
+      throw new DataError('No se pudo guardar el mensaje en este dispositivo. Revisa el espacio o los permisos de almacenamiento.');
+    }
+  }
 
-    console.log(`Sincronizando ${queue.length} mensaje(s) pendiente(s)...`);
-    const remaining: any[] = [];
-
-    for (const msg of queue) {
-      try {
-        await axios.post(this.apiUrl, msg, {
-          headers: { 'Content-Type': 'application/json' },
-          timeout: 6000
-        });
-      } catch (err) {
-        remaining.push(msg);
+  /** Solo confirma y elimina mensajes tras status=success. No hay envíos simultáneos. */
+  async syncPendingMessages(manual = false) {
+    if (this.isLoading) return;
+    this.isLoading = true;
+    try {
+      const queue = this.getOfflineQueue();
+      if (!queue.length) return;
+      if (!this.connection.online()) {
+        this.statusMessage = 'Hay mensajes guardados pendientes de conexión.';
+        return;
       }
-    }
-
-    localStorage.setItem(this.PENDING_KEY, JSON.stringify(remaining));
-
-    if (remaining.length === 0) {
-      this.presentToast('✅ Mensajes guardados offline sincronizados con el servidor.', 'success');
+      while (queue.length) {
+        if (!this.connection.online()) break;
+        if (queue[0].needsReview && !manual) {
+          this.statusMessage = 'Un envío quedó sin confirmar. Verifica si llegó antes de pulsar Reintentar pendientes; podría duplicarse.';
+          return;
+        }
+        // Se persiste antes del POST: si la app se cierra o se pierde la respuesta,
+        // el próximo inicio no repite automáticamente una escritura ambigua.
+        queue[0].needsReview = true;
+        this.saveQueue(queue);
+        await this.send(queue[0]);
+        queue.shift();
+        this.saveQueue(queue);
+      }
+      this.statusMessage = queue.length ? 'Sin conexión. Se conservan los mensajes pendientes.' : 'Todos los mensajes pendientes se enviaron correctamente.';
+    } catch (error) {
+      this.statusMessage = `${dataErrorMessage(error)} Se conservan los pendientes. Verifica si el mensaje llegó antes de reintentar; podría duplicarse.`;
+    } finally {
+      this.isLoading = false;
+      if (!this.destroyed) this.cdr.detectChanges();
     }
   }
 
-  resetForm() {
-    this.contactData = {
-      nombre: '',
-      apellido: '',
-      email: '',
-      mensaje: ''
-    };
-  }
+  resetForm() { this.contactData = { nombre: '', apellido: '', email: '', mensaje: '' }; }
 
-  async presentToast(message: string, color: string = 'dark') {
-    const toast = await this.toastCtrl.create({
-      message: message,
-      duration: 3500,
-      color: color,
-      position: 'bottom'
-    });
-    toast.present();
+  async presentToast(message: string, color = 'dark') {
+    const toast = await this.toastCtrl.create({ message, duration: 3500, color, position: 'bottom' });
+    await toast.present();
   }
 }

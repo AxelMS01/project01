@@ -2,7 +2,7 @@
   <ion-toolbar color="primary">
     <ion-title>Directory - Uma Musume</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="cargarUmas()" title="Actualizar">
+      <ion-button (click)="cargarUmas(true)" [disabled]="cargando" title="Actualizar">
         <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
       </ion-button>
       <ion-button (click)="authService.confirmLogout()" title="Cerrar sesión">
@@ -18,19 +18,20 @@
     <ion-refresher-content pullingText="Desliza para actualizar..." refreshingSpinner="crescent"></ion-refresher-content>
   </ion-refresher>
 
-  <!-- Banner Temporal de Modo Offline (se oculta automáticamente tras unos segundos) -->
-  <div *ngIf="showOfflineBanner && !cargando" class="offline-badge-container ion-text-center ion-margin-bottom">
-    <ion-chip color="warning" class="offline-chip">
-      <ion-icon name="cloud-offline-outline"></ion-icon>
-      <ion-label>Modo sin conexión (datos guardados)</ion-label>
-      <ion-icon name="close-circle" class="close-chip-btn" (click)="showOfflineBanner = false"></ion-icon>
-    </ion-chip>
+  <div *ngIf="!cargando && (showOfflineBanner || statusMessage)" class="ion-text-center ion-margin-bottom" role="status" aria-live="polite">
+    <p>{{ statusMessage }}</p>
+    <p *ngIf="showOfflineBanner">Mostrando una copia guardada que puede estar desactualizada.</p>
+    <p *ngIf="showOfflineBanner && cacheTime">Última actualización: {{ cacheTime }}</p>
   </div>
 
   <!-- Estado de Carga -->
+  <p *ngIf="!cargando && imageStatus" class="ion-text-center" role="status" aria-live="polite">{{ imageStatus }}</p>
   <div *ngIf="cargando" class="ion-text-center ion-padding my-loading-container">
     <ion-spinner name="crescent" color="primary"></ion-spinner>
     <p>Cargando lista de corredoras...</p>
+    <p *ngIf="imageCache.progress() as progress" role="status" aria-live="polite">
+      Preparando imágenes sin conexión: {{ progress.completed }} de {{ progress.total }}
+    </p>
   </div>
 
   <!-- Estado de Error -->
@@ -70,7 +71,7 @@
       <ion-col size="12" size-lg="6" size-xl="4" *ngFor="let uma of umas">
         <ion-card class="uma-card">
           <div class="uma-image-container">
-            <img [src]="uma.imageUrl" [alt]="uma.name" loading="lazy" />
+            <img [src]="uma.imageUrl" [alt]="uma.name" loading="lazy" (error)="onImageError($event)" />
           </div>
           <ion-card-header>
             <div class="card-heading">

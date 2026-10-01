@@ -21,6 +21,13 @@
       </div>
 
       <ion-card-content class="form-card-content">
+        <div role="status" aria-live="polite">
+          <p>{{ statusMessage }}</p>
+          <p *ngIf="pendingCount">Mensajes pendientes en este dispositivo: {{ pendingCount }}</p>
+          <ion-button *ngIf="pendingCount" (click)="syncPendingMessages(true)" [disabled]="isLoading || !connection.online()">
+            Reintentar pendientes
+          </ion-button>
+        </div>
         <form (ngSubmit)="onSubmit()">
           
           <!-- Campo Nombre -->
@@ -33,7 +40,7 @@
                 name="nombre" 
                 placeholder="Ingresa tu nombre" 
                 [(ngModel)]="contactData.nombre" 
-                required>
+                [disabled]="isLoading" required>
               </ion-input>
             </div>
           </div>
@@ -48,7 +55,7 @@
                 name="apellido" 
                 placeholder="Ingresa tu apellido" 
                 [(ngModel)]="contactData.apellido" 
-                required>
+                [disabled]="isLoading" required>
               </ion-input>
             </div>
           </div>
@@ -63,7 +70,7 @@
                 name="email" 
                 placeholder="ejemplo@correo.com" 
                 [(ngModel)]="contactData.email" 
-                required>
+                [disabled]="isLoading" required>
               </ion-input>
             </div>
           </div>
@@ -79,7 +86,7 @@
                 maxlength="140" 
                 placeholder="Escribe tu mensaje aquí..." 
                 [(ngModel)]="contactData.mensaje" 
-                required>
+                [disabled]="isLoading" required>
               </ion-textarea>
             </div>
           </div>
@@ -87,7 +94,7 @@
           <!-- Botón de Envío -->
           <div class="button-wrapper">
             <button class="custom-btn waves-effect" type="submit" [disabled]="isLoading">
-              <span *ngIf="!isLoading">ENVIAR</span>
+              <span *ngIf="!isLoading">{{ connection.online() ? 'ENVIAR' : 'GUARDAR PARA ENVIAR' }}</span>
               <ion-spinner name="crescent" *ngIf="isLoading"></ion-spinner>
               <i class="material-icons right-icon" *ngIf="!isLoading">send</i>
             </button>

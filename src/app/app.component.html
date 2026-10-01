@@ -1,3 +1,6 @@
 <ion-app>
+  <div *ngIf="!connection.online()" class="connection-banner" role="status" aria-live="polite">
+    Sin conexión. Puedes consultar el catálogo guardado; iniciar sesión requiere conexión.
+  </div>
   <ion-router-outlet></ion-router-outlet>
 </ion-app>

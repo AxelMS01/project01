@@ -133,7 +133,7 @@ const umas = response.data.data;
 
 `response.data` es el cuerpo JSON que entrega Axios. El segundo `.data` es la propiedad del contrato PHP que contiene el arreglo de Umas. El tipo `ApiResponse<Uma[]>` ayuda al compilador; no valida el JSON en tiempo de ejecución.
 
-5. Si la respuesta tiene éxito, el servicio guarda `offline_cached_umas` y `offline_cached_umas_timestamp` en `localStorage`.
+5. Si la respuesta tiene éxito y contiene datos válidos, el servicio guarda un registro `{ version: 1, data, timestamp }` en `offline_cached_umas` dentro de `localStorage`. La lectura sigue admitiendo el formato anterior con fecha separada.
 6. La página recibe `{ data, fromCache, timestamp }` y prepara cada tarjeta:
 
 ```ts
@@ -156,7 +156,7 @@ El primer botón usa `rareza_base`, normalizada desde `rarity` cuando hace falta
 
 ### Caché y actualización
 
-El servicio intenta primero la red. Si la petición falla y existe una copia no vacía, devuelve esa copia con `fromCache: true`; si tampoco hay caché, propaga el error y la página muestra el mensaje de conexión.
+El servicio intenta primero la red cuando el dispositivo indica que está disponible. Si falta red o falla la petición y existe una copia válida (incluso vacía), devuelve esa copia con `fromCache: true`. Sin caché válida, la página muestra el error y permite reintentar. Una respuesta inválida no reemplaza la caché; un fallo al guardar no impide mostrar los datos recibidos, pero se informa al usuario.
 
 El botón Actualizar, el gesto de arrastrar y el evento `online` vuelven a cargar el catálogo. La fecha de caché es local, no un timestamp enviado por el servidor. El manejo actual también puede recurrir a la caché ante errores HTTP, no solo cuando falta conexión.
 
@@ -177,9 +177,11 @@ Login y registro usan **10 segundos** de timeout. Los errores HTTP se leen desde
 
 Después del login, la pantalla guarda `response.data.user` en `localStorage`, bajo `currentUser`, y navega a `/tabs/tab1`. `authGuard` comprueba la existencia de esa clave. En la implementación actual no se emite un JWT ni se crea una sesión de servidor; tampoco se envía un token Authorization en estas llamadas. El guard controla la navegación del frontend, no la autorización de los endpoints PHP.
 
-Contacto usa **6000 ms** de timeout. Si `onSubmit()` entra en su `catch`, guarda el mensaje en `offline_pending_contact_messages`, añadiendo una fecha local. `syncPendingMessages()` intenta reenviarlo al iniciar la pantalla y al recibir el evento `online`. Los pendientes cuya petición lanza error se conservan para otro intento.
+Contacto usa **6000 ms** de timeout. Si el dispositivo informa que no hay conexión, guarda el mensaje en `offline_pending_contact_messages` con una fecha local y vacía el formulario únicamente después del guardado. Los errores al enviar con red conservan el formulario y muestran un mensaje; no se encolan automáticamente.
 
-Actualmente el `catch` de contacto también encola errores HTTP de validación o servidor, no únicamente fallos de conexión. El reintento considera enviada una petición que no lanza excepción, sin comprobar de nuevo `status` en el cuerpo.
+`syncPendingMessages()` intenta enviar los pendientes al iniciar Contacto o recibir `online`, sin peticiones simultáneas. Antes del POST marca el mensaje con `needsReview`; solo lo elimina si la respuesta confirma `status: success`. Si hay un fallo o se cierra la app, no repite automáticamente el envío ambiguo. El usuario puede verificarlo y pulsar «Reintentar pendientes». El backend no dispone de claves de idempotencia: un reintento manual después de perder una respuesta podría duplicar un mensaje.
+
+La estrategia, bitácora y prueba sin conexión se documentan en [OFFLINE.md](OFFLINE.md).
 
 `AuthService.logout()` elimina `currentUser` localmente: no llama a un endpoint de logout. La edición de nombre y el borrado de caché en `Tab3Page` también son operaciones locales; no actualizan MySQL.
 

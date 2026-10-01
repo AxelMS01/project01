@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
 import { AuthService, User } from '../services/auth.service';
+import { ImageCacheService } from '../services/image-cache.service';
 
 @Component({
   selector: 'app-tab3',
@@ -14,7 +15,8 @@ export class Tab3Page implements OnInit {
   constructor(
     public authService: AuthService,
     private alertCtrl: AlertController,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private imageCache: ImageCacheService
   ) {}
 
   ngOnInit() {
@@ -84,13 +86,23 @@ export class Tab3Page implements OnInit {
   async clearOfflineCache() {
     const alert = await this.alertCtrl.create({
       header: 'Limpiar Caché Offline',
-      message: '¿Deseas eliminar la copia local de datos guardada en el dispositivo?',
+      message: '¿Deseas eliminar el catálogo y las imágenes guardadas para usarlos sin conexión?',
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
         {
           text: 'Eliminar',
           role: 'destructive',
           handler: async () => {
+            try {
+              await this.imageCache.clear();
+            } catch {
+              const errorToast = await this.toastCtrl.create({
+                message: 'No se pudieron eliminar las imágenes guardadas. Intenta de nuevo.',
+                duration: 3000, color: 'warning'
+              });
+              await errorToast.present();
+              return false;
+            }
             localStorage.removeItem('offline_cached_umas');
             localStorage.removeItem('offline_cached_umas_timestamp');
             const toast = await this.toastCtrl.create({
@@ -100,6 +112,7 @@ export class Tab3Page implements OnInit {
               color: 'dark'
             });
             await toast.present();
+            return true;
           }
         }
       ]

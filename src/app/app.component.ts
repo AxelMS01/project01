@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { ConnectionService } from './services/connection.service';
 import { addIcons } from 'ionicons';
 import { 
   logoFacebook, 
@@ -24,7 +25,7 @@ import {
   standalone: false,
 })
 export class AppComponent {
-  constructor() {
+  constructor(public connection: ConnectionService) {
     addIcons({
       'logo-facebook': logoFacebook,
       'logo-google': logoGoogle,
