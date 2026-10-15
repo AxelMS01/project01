@@ -1,144 +1,120 @@
-<ion-header [translucent]="true">
-  <ion-toolbar color="primary">
-    <ion-title>Directory - Uma Musume</ion-title>
-    <ion-buttons slot="end">
-      <ion-button (click)="cargarUmas(true)" [disabled]="cargando" title="Actualizar">
-        <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
-      </ion-button>
-      <ion-button (click)="authService.confirmLogout()" title="Cerrar sesión">
-        <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
+<ion-header class="catalog-header">
+  <ion-toolbar>
+    <div class="header-main">
+      <a class="brand" routerLink="/tabs/tab1" aria-label="Uma Companion: catálogo">
+        <span class="brand-mark"><ion-icon name="flash-outline" aria-hidden="true"></ion-icon></span>
+        <span><strong>Uma Companion</strong><small>Track Better. Run Further.</small></span>
+      </a>
+      <div class="search-shell">
+        <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
+        <input type="search" placeholder="Search Uma Musume..." aria-label="Buscar Uma Musume (próximamente)" disabled />
+      </div>
+      <div class="header-actions">
+        <button class="icon-button optional-action" disabled aria-label="Favoritos (próximamente)" title="Favoritos: próximamente"><ion-icon name="heart-outline" aria-hidden="true"></ion-icon></button>
+        <a class="icon-button optional-action" routerLink="/tabs/tab3" aria-label="Configuración del perfil" title="Configuración"><ion-icon name="settings-outline" aria-hidden="true"></ion-icon></a>
+        <a class="profile-link" routerLink="/tabs/tab3" aria-label="Abrir perfil"><span class="avatar"><ion-icon name="person-outline" aria-hidden="true"></ion-icon></span><ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon></a>
+      </div>
+    </div>
+    <nav class="catalog-nav" aria-label="Secciones del catálogo">
+      <a routerLink="/tabs/tab1" aria-current="page"><ion-icon name="grid-outline" aria-hidden="true"></ion-icon>Catalog</a>
+      <button disabled title="Inheritance: próximamente"><ion-icon name="git-network-outline" aria-hidden="true"></ion-icon>Inheritance</button>
+      <button disabled title="Favorites: próximamente"><ion-icon name="heart-outline" aria-hidden="true"></ion-icon>Favorites</button>
+    </nav>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" class="ion-padding">
-  <!-- Pull to Refresh -->
+<ion-content class="catalog-content">
   <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
     <ion-refresher-content pullingText="Desliza para actualizar..." refreshingSpinner="crescent"></ion-refresher-content>
   </ion-refresher>
+  <div class="catalog-layout">
+    <aside class="catalog-sidebar" aria-label="Navegación y filtros">
+      <nav class="sidebar-nav" aria-label="Herramientas">
+        <a routerLink="/tabs/tab1" aria-current="page"><ion-icon name="grid-outline" aria-hidden="true"></ion-icon>Uma Catalog</a>
+        <button disabled><ion-icon name="heart-outline" aria-hidden="true"></ion-icon>Favorites</button>
+        <button disabled><ion-icon name="copy-outline" aria-hidden="true"></ion-icon>Comparison</button>
+        <button disabled><ion-icon name="construct-outline" aria-hidden="true"></ion-icon>Build Planner</button>
+      </nav>
+      <app-catalog-filters></app-catalog-filters>
+    </aside>
+    <main class="catalog-main" aria-labelledby="catalog-title">
+      <div class="page-heading">
+        <div><h1 id="catalog-title">Uma Catalog</h1><p class="page-description">Browse and explore Uma Musume. View stats, growth rates, and aptitudes.</p></div>
+        <div class="catalog-actions">
+          <span class="uma-count">{{ umas.length }} Umas</span>
+          <span class="layout-indicator" aria-label="Vista de cuadrícula"><ion-icon name="grid-outline" aria-hidden="true"></ion-icon></span>
+          <button class="icon-button" (click)="cargarUmas(true)" [disabled]="cargando" aria-label="Actualizar catálogo" title="Actualizar"><ion-icon name="refresh-outline" aria-hidden="true"></ion-icon></button>
+          <button class="icon-button" (click)="authService.confirmLogout()" aria-label="Cerrar sesión" title="Cerrar sesión"><ion-icon name="log-out-outline" aria-hidden="true"></ion-icon></button>
+        </div>
+      </div>
+      <div class="mobile-filter-bar" aria-label="Herramientas del catálogo">
+        <button class="mobile-filter-trigger" (click)="filtersOpen = true" aria-haspopup="dialog" [attr.aria-expanded]="filtersOpen"><ion-icon name="options-outline" aria-hidden="true"></ion-icon>Filters</button>
+        <button disabled title="Filtro de rareza: próximamente">Rarity</button>
+        <button disabled title="Ordenar: próximamente">Sort</button>
+        <span aria-label="Layout: cuadrícula"><ion-icon name="grid-outline" aria-hidden="true"></ion-icon>Layout</span>
+      </div>
+      <div *ngIf="!cargando && (showOfflineBanner || statusMessage)" class="status-panel" role="status" aria-live="polite">
+        <p>{{ statusMessage }}</p>
+        <p *ngIf="showOfflineBanner">Mostrando una copia guardada que puede estar desactualizada.</p>
+        <p *ngIf="showOfflineBanner && cacheTime">Última actualización: {{ cacheTime }}</p>
+      </div>
 
-  <div *ngIf="!cargando && (showOfflineBanner || statusMessage)" class="ion-text-center ion-margin-bottom" role="status" aria-live="polite">
-    <p>{{ statusMessage }}</p>
-    <p *ngIf="showOfflineBanner">Mostrando una copia guardada que puede estar desactualizada.</p>
-    <p *ngIf="showOfflineBanner && cacheTime">Última actualización: {{ cacheTime }}</p>
-  </div>
+      <!-- Estado de Carga -->
+      <p *ngIf="!cargando && imageStatus" class="image-status" role="status" aria-live="polite">{{ imageStatus }}</p>
+      <div *ngIf="cargando" class="ion-text-center ion-padding my-loading-container">
+        <ion-spinner name="crescent" color="primary"></ion-spinner>
+        <p>Cargando lista de corredoras...</p>
+        <p *ngIf="imageCache.progress() as progress" role="status" aria-live="polite">
+          Preparando imágenes sin conexión: {{ progress.completed }} de {{ progress.total }}
+        </p>
+      </div>
 
-  <!-- Estado de Carga -->
-  <p *ngIf="!cargando && imageStatus" class="ion-text-center" role="status" aria-live="polite">{{ imageStatus }}</p>
-  <div *ngIf="cargando" class="ion-text-center ion-padding my-loading-container">
-    <ion-spinner name="crescent" color="primary"></ion-spinner>
-    <p>Cargando lista de corredoras...</p>
-    <p *ngIf="imageCache.progress() as progress" role="status" aria-live="polite">
-      Preparando imágenes sin conexión: {{ progress.completed }} de {{ progress.total }}
-    </p>
-  </div>
-
-  <!-- Estado de Error -->
-  <div *ngIf="!cargando && errorMensaje" class="ion-padding ion-text-center">
-    <ion-card color="light" class="ion-padding">
-      <ion-icon name="alert-circle-outline" style="font-size: 3rem; color: var(--ion-color-danger);"></ion-icon>
-      <ion-card-header>
-        <ion-card-title>Error de Conexión</ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <p>{{ errorMensaje }}</p>
-        <ion-button color="primary" fill="solid" size="small" class="ion-margin-top" (click)="cargarUmas()">
-          Reintentar
-        </ion-button>
-      </ion-card-content>
-    </ion-card>
-  </div>
-
-  <!-- Estado Vacío (Sin datos) -->
-  <div *ngIf="!cargando && !errorMensaje && umas.length === 0" class="ion-padding ion-text-center">
-    <ion-card class="ion-padding">
-      <ion-card-header>
-        <ion-card-title>No hay registros disponibles</ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <p>No se encontraron datos de Uma Musume o la petición a la API retornó una lista vacía.</p>
-        <ion-button color="primary" fill="solid" size="small" class="ion-margin-top" (click)="cargarUmas()">
-          Actualizar datos
-        </ion-button>
-      </ion-card-content>
-    </ion-card>
-  </div>
-
-  <!-- umas proviene de cargarUmas(): respuesta del catálogo o copia local de UmaService. -->
-  <ion-grid class="directory-grid" *ngIf="!cargando && !errorMensaje && umas.length > 0">
-    <ion-row>
-      <ion-col size="12" size-lg="6" size-xl="4" *ngFor="let uma of umas">
-        <ion-card class="uma-card">
-          <div class="uma-image-container">
-            <img [src]="uma.imageUrl" [alt]="uma.name" loading="lazy" (error)="onImageError($event)" />
-          </div>
+      <!-- Estado de Error -->
+      <div *ngIf="!cargando && errorMensaje" class="ion-padding ion-text-center">
+        <ion-card class="state-card ion-padding">
+          <ion-icon name="alert-circle-outline" style="font-size: 3rem; color: var(--ion-color-danger);"></ion-icon>
           <ion-card-header>
-            <div class="card-heading">
-              <ion-card-title>{{ uma.name }}</ion-card-title>
-              <ion-badge class="rarity-badge" [attr.aria-label]="(uma.rareza_base ?? uma.rarity) + ' estrellas'">
-                {{ getRarityStars(uma.rareza_base ?? uma.rarity) }}
-              </ion-badge>
-            </div>
+            <ion-card-title>Error de Conexión</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <div class="stats-heading">
-              <h2>Estadísticas</h2>
-              <!-- El cambio es local: baseStats y maxStats ya llegaron en el mismo GET. -->
-              <ion-segment mode="ios" [(ngModel)]="uma.statMode" aria-label="Rareza de las estadísticas">
-                <ion-segment-button value="base"><ion-label>{{ uma.rareza_base }}★</ion-label></ion-segment-button>
-                <ion-segment-button value="max"><ion-label>5★</ion-label></ion-segment-button>
-              </ion-segment>
-            </div>
-            <div class="stat-grid" aria-live="polite">
-              <div class="stat-tile" *ngFor="let stat of statDefinitions" [attr.data-stat]="stat.key">
-                <span class="stat-label"><ion-icon [icon]="stat.icon" aria-hidden="true"></ion-icon>{{ stat.label }}</span>
-                <strong>{{ getStat(uma, stat.key) ?? '—' }}</strong>
-              </div>
-            </div>
-            <section class="growth-section" *ngIf="uma.growthRates" aria-label="Growth Rates">
-              <h2>Growth Rates</h2>
-              <div class="growth-row">
-                <div class="growth-chip" *ngFor="let stat of statDefinitions" [attr.data-stat]="stat.key" [class.is-zero]="uma.growthRates[stat.key] === 0">
-                  <ion-icon [icon]="stat.icon" aria-hidden="true"></ion-icon>
-                  <span>{{ stat.label }}</span>
-                  <strong>+{{ uma.growthRates[stat.key] }}%</strong>
-                </div>
-              </div>
-            </section>
-            <section class="aptitude-section" aria-label="Aptitudes">
-              <h2>Aptitudes</h2>
-              <div class="aptitude-grid">
-                <div class="aptitude-group">
-                  <h3>Terreno</h3>
-                  <div class="aptitudes-row">
-                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.turf"><span>Turf</span><strong>{{ uma.aptitudes.turf }}</strong></span>
-                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.dirt"><span>Dirt</span><strong>{{ uma.aptitudes.dirt }}</strong></span>
-                  </div>
-                </div>
-                <div class="aptitude-group">
-                  <h3>Distancia</h3>
-                  <div class="aptitudes-row">
-                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.short"><span>Short</span><strong>{{ uma.aptitudes.short }}</strong></span>
-                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.mile"><span>Mile</span><strong>{{ uma.aptitudes.mile }}</strong></span>
-                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.medium"><span>Medium</span><strong>{{ uma.aptitudes.medium }}</strong></span>
-                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.long"><span>Long</span><strong>{{ uma.aptitudes.long }}</strong></span>
-                  </div>
-                </div>
-                <div class="aptitude-group">
-                  <h3>Estrategia</h3>
-                  <div class="aptitudes-row">
-                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.front"><span>Front</span><strong>{{ uma.aptitudes.front }}</strong></span>
-                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.leader"><span>Leader</span><strong>{{ uma.aptitudes.leader }}</strong></span>
-                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.betweener"><span>Betweener</span><strong>{{ uma.aptitudes.betweener }}</strong></span>
-                    <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.chaser"><span>Chaser</span><strong>{{ uma.aptitudes.chaser }}</strong></span>
-                  </div>
-                </div>
-              </div>
-            </section>
+            <p>{{ errorMensaje }}</p>
+            <ion-button color="primary" fill="solid" size="small" class="ion-margin-top" (click)="cargarUmas()">
+              Reintentar
+            </ion-button>
           </ion-card-content>
         </ion-card>
-      </ion-col>
-    </ion-row>
-  </ion-grid>
+      </div>
+
+      <!-- Estado Vacío (Sin datos) -->
+      <div *ngIf="!cargando && !errorMensaje && umas.length === 0" class="ion-padding ion-text-center">
+        <ion-card class="state-card ion-padding">
+          <ion-card-header>
+            <ion-card-title>No hay registros disponibles</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <p>No se encontraron datos de Uma Musume o la petición a la API retornó una lista vacía.</p>
+            <ion-button color="primary" fill="solid" size="small" class="ion-margin-top" (click)="cargarUmas()">
+              Actualizar datos
+            </ion-button>
+          </ion-card-content>
+        </ion-card>
+      </div>
+
+      <div class="directory-grid" *ngIf="!cargando && !errorMensaje && umas.length > 0">
+        <app-uma-card *ngFor="let uma of umas" [uma]="uma"></app-uma-card>
+      </div>
+    </main>
+  </div>
 </ion-content>
+
+<ion-modal class="filter-modal" [isOpen]="filtersOpen" (didDismiss)="filtersOpen = false" aria-labelledby="filter-dialog-title">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title id="filter-dialog-title">Catalog filters</ion-title>
+        <ion-buttons slot="end"><ion-button class="close-filters" (click)="filtersOpen = false" aria-label="Cerrar filtros"><ion-icon name="close-outline" slot="icon-only"></ion-icon></ion-button></ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding"><app-catalog-filters></app-catalog-filters></ion-content>
+  </ng-template>
+</ion-modal>

@@ -1,0 +1,18 @@
+:host { display: block; color: #d0d9e7; color-scheme: dark; --catalog-border: rgba(120,160,220,.16); --catalog-muted: #a1aec1; }
+button, select { font: inherit; }
+button:disabled, input:disabled, select:disabled { cursor: not-allowed; }
+button:disabled { color: #8593a8; }
+.filters-heading { display: flex; align-items: center; justify-content: space-between; margin-top: 26px; }
+.filters-heading h2 { margin: 0; font-size: 15px; }
+.filters-heading button { border: 0; background: none; font-size: 11px; }
+.filter-note { color: var(--catalog-muted); font-size: 11px; line-height: 1.6; }
+fieldset { min-width: 0; margin: 22px 0; padding: 0; border: 0; }
+legend, .sort-label { color: #d0d9e7; font-size: 12px; font-weight: 600; }
+legend { margin-bottom: 12px; }
+fieldset label { display: flex; align-items: center; gap: 10px; margin: 11px 0; color: var(--catalog-muted); font-size: 12px; }
+fieldset input { width: 15px; height: 15px; margin: 0; }
+.rarity-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.rarity-options button { min-height: 34px; background: #142035; border: 1px solid var(--catalog-border); border-radius: 7px; font-size: 12px; }
+.rarity-options .selected { background: #173054; color: #87bfff; border-color: #3268b4; }
+.sort-label { display: grid; gap: 10px; }
+select { width: 100%; padding: 10px; border: 1px solid var(--catalog-border); border-radius: 8px; background: #142035; color: var(--catalog-muted); font-size: 12px; }

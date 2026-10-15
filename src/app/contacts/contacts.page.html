@@ -1,0 +1,34 @@
+<ion-header><ion-toolbar><ion-title>Mensajes de contacto</ion-title></ion-toolbar></ion-header>
+<ion-content>
+  <main>
+    <a routerLink="/tabs/tab1">Volver al catálogo</a>
+    <h1>Administra tus mensajes</h1>
+    <p>Crea, consulta, edita y elimina mensajes guardados en el servidor.</p>
+    <p class="notice">Demostración académica local. Usa datos ficticios.</p>
+    <div *ngIf="busy" class="loading" role="status" aria-live="polite"><ion-spinner name="crescent"></ion-spinner> {{ operation }} · Procesando solicitud…</div>
+    <p *ngIf="error" class="error" role="alert">{{ error }}</p>
+    <p *ngIf="result" class="success" role="status">{{ result }}</p>
+    <section class="layout" [attr.aria-busy]="busy">
+      <form #contactForm="ngForm" (ngSubmit)="save()">
+        <h2>{{ editingId === null ? 'Nuevo mensaje' : 'Editar mensaje #' + editingId }}</h2>
+        <ion-input label="Nombre" labelPlacement="stacked" name="nombre" [(ngModel)]="form.nombre" required maxlength="100" [disabled]="busy"></ion-input>
+        <ion-input label="Apellido" labelPlacement="stacked" name="apellido" [(ngModel)]="form.apellido" required maxlength="100" [disabled]="busy"></ion-input>
+        <ion-input label="Correo electrónico" labelPlacement="stacked" name="email" type="email" [(ngModel)]="form.email" required email maxlength="150" [disabled]="busy"></ion-input>
+        <ion-textarea label="Mensaje" labelPlacement="stacked" name="mensaje" [(ngModel)]="form.mensaje" required maxlength="5000" [autoGrow]="true" [disabled]="busy"></ion-textarea>
+        <ion-button type="submit" [disabled]="busy || contactForm.invalid">{{ editingId === null ? 'Crear mensaje' : 'Guardar cambios' }}</ion-button>
+        <ion-button *ngIf="editingId !== null" fill="clear" type="button" (click)="reset()" [disabled]="busy">Cancelar edición</ion-button>
+      </form>
+      <section>
+        <div class="list-heading"><h2>Mensajes ({{ contacts.length }})</h2><ion-button fill="outline" (click)="load()" [disabled]="busy">Actualizar</ion-button></div>
+        <p *ngIf="!busy && !error && contacts.length === 0">No hay mensajes. Crea el primero.</p>
+        <article *ngFor="let contact of contacts">
+          <h3>#{{ contact.id }} · {{ contact.nombre }} {{ contact.apellido }}</h3>
+          <small>{{ contact.email }}</small>
+          <p class="message">{{ contact.mensaje }}</p>
+          <ion-button size="small" fill="outline" (click)="edit(contact)" [disabled]="busy">Editar</ion-button>
+          <ion-button size="small" color="danger" fill="outline" (click)="remove(contact)" [disabled]="busy">Eliminar</ion-button>
+        </article>
+      </section>
+    </section>
+  </main>
+</ion-content>

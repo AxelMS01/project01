@@ -2,7 +2,7 @@ import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { IonicModule } from '@ionic/angular/lazy';
+import { IonContent, IonIcon, IonSpinner } from '@ionic/angular';
 import { LoginPageRoutingModule } from './login-routing.module';
 import { LoginPage } from './login.page';
 
@@ -10,7 +10,7 @@ import { LoginPage } from './login.page';
   imports: [
     CommonModule,
     FormsModule,
-    IonicModule,
+    IonContent, IonIcon, IonSpinner,
     LoginPageRoutingModule
   ],
   declarations: [LoginPage],

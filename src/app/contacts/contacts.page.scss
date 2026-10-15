@@ -1,0 +1,14 @@
+main { max-width: 1080px; margin: auto; padding: 24px; }
+h1 { font-size: 28px; margin-top: 24px; }
+h2 { font-size: 21px; }
+.notice, small { color: var(--ion-color-medium-shade); }
+.layout { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(280px, 1.4fr); gap: 28px; }
+form, article { padding: 20px; border: 1px solid var(--ion-color-medium); border-radius: 14px; margin-bottom: 16px; }
+ion-input, ion-textarea { margin-bottom: 16px; --padding-start: 8px; background: var(--ion-color-light); border-radius: 8px; }
+.list-heading, .loading { display: flex; align-items: center; gap: 12px; justify-content: space-between; }
+.loading { justify-content: flex-start; padding: 16px; }
+.success, .error { padding: 14px; border-radius: 8px; }
+.success { background: #dcfce7; color: #14532d; }
+.error { background: #fee2e2; color: #7f1d1d; }
+.message { white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 700px) { .layout { grid-template-columns: 1fr; } main { padding: 16px; } }

@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core';
+import { environment } from '../../environments/environment';
 
 // Puerto HTTP de Apache, distinto al puerto 3307 de MySQL configurado en PHP.
 export const SERVER_PORT = '8088';
@@ -13,4 +14,19 @@ export const SERVER_PORT = '8088';
  */
 export function getApiBaseUrl(): string {
   return `http://localhost:${SERVER_PORT}/backend`;
+}
+
+/** Proxy local solo para descargar imágenes en el servidor de desarrollo web. */
+export function getImageDownloadUrl(source: string): string {
+  if (Capacitor.isNativePlatform() || environment.production) return source;
+  try {
+    const url = new URL(source);
+    const backend = new URL(getApiBaseUrl());
+    if (url.origin === backend.origin && url.pathname.startsWith(`${backend.pathname}/public/images/`)) {
+      return new URL(url.pathname + url.search, window.location.origin).href;
+    }
+  } catch {
+    // URLs relativas o no HTTP conservan el comportamiento anterior.
+  }
+  return source;
 }

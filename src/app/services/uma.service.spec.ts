@@ -1,5 +1,5 @@
 ﻿import { TestBed } from '@angular/core/testing';
-import { vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import axios, { AxiosInstance } from 'axios';
 import { UmaService } from './uma.service';
 import { ConnectionService } from './connection.service';
@@ -12,12 +12,12 @@ const catalog = [{
   aptitudes: { turf: 'A', dirt: 'B', short: 'C', mile: 'A', medium: 'A', long: 'B', front: 'C', leader: 'A', betweener: 'A', chaser: 'B' }
 }];
 
-describe('Catálogo sin conexión', () => {
+  describe('Catálogo sin conexión', () => {
   let service: UmaService;
   let connection: ConnectionService;
   let get: ReturnType<typeof vi.fn>;
 
-  beforeEach(() => {
+      beforeEach(() => {
     localStorage.clear();
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
     get = vi.fn().mockResolvedValue({ data: { status: 'success', data: catalog } });
@@ -28,7 +28,7 @@ describe('Catálogo sin conexión', () => {
     connection = TestBed.inject(ConnectionService);
     service = TestBed.inject(UmaService);
   });
-  afterEach(() => { vi.restoreAllMocks(); localStorage.clear(); });
+    afterEach(() => { vi.restoreAllMocks(); localStorage.clear(); });
 
   it('descarga, persiste y vuelve a abrir sin red sin hacer otra petición', async () => {
     expect((await service.getUmas()).fromCache).toBe(false);
