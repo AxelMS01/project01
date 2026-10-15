@@ -1,0 +1,46 @@
+:host { display: block; min-width: 0; }
+.uma-card { --background: #111b2b; --color: #d4dfec; margin: 0; min-width: 0; border: 1px solid var(--uc-border); border-radius: 16px; box-shadow: 0 8px 24px #0002; transition: transform 180ms ease, box-shadow 180ms ease; }
+.uma-card ion-card-header { padding: 14px 14px 8px; }
+.uma-card ion-card-content { padding: 0 14px 16px; }
+.uma-card h2 { margin: 0; color: #becbdd; font-size: 12px; font-weight: 600; }
+.uma-image-container { height: 164px; background: radial-gradient(ellipse at center, #243858, #101a2a 85%); border-bottom: 1px solid var(--uc-border); }
+.uma-image-container img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.card-heading { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.card-heading ion-card-title { color: #f5f7fa; font-size: 19px; font-weight: 650; letter-spacing: -.4px; overflow-wrap: anywhere; }
+.rarity-badge { --background: #ffcf3320; --color: #ffcf33; flex-shrink: 0; border: 1px solid #ffcf3330; border-radius: 20px; padding: 5px 8px; font-size: 11px; letter-spacing: 1px; }
+.stats-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0 12px; }
+.stats-heading ion-segment { width: 126px; min-height: 34px; padding: 2px; background: #080f1c; border: 1px solid var(--uc-border); border-radius: 24px; }
+.stats-heading ion-segment-button { --color: #a4b4c9; --color-checked: white; --indicator-color: #286bc8; --indicator-box-shadow: none; --border-radius: 20px; min-width: 0; min-height: 28px; margin: 0; font-size: 12px; }
+.stats-heading ion-segment-button::before { display: none; }
+.stats-heading ion-segment-button::part(native):focus-visible { outline: 2px solid #a9d6ff; outline-offset: -3px; }
+[data-stat='speed'] { --stat-color: #ff9b54; }
+[data-stat='stamina'] { --stat-color: #ff789f; }
+[data-stat='power'] { --stat-color: #ffcf6e; }
+[data-stat='guts'] { --stat-color: #93db74; }
+[data-stat='wit'] { --stat-color: #bd96ff; }
+.stat-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+.stat-tile { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 9px 2px; background: #192538; border: 1px solid #ffffff04; border-radius: 9px; }
+.stat-tile strong { color: #f5f7fa; font-size: 20px; font-variant-numeric: tabular-nums; }
+.stat-label { display: flex; flex-direction: column; align-items: center; gap: 5px; color: #b7c5d8; font-size: 10px; }
+.stat-label ion-icon { color: var(--stat-color); font-size: 17px; }
+.growth-section, .aptitude-section { border-top: 1px solid var(--uc-border); margin-top: 14px; padding-top: 12px; }
+.growth-section h2, .aptitude-section h2 { margin-bottom: 10px; }
+.growth-row, .aptitudes-row { display: flex; flex-wrap: wrap; gap: 5px; }
+.growth-chip { display: flex; align-items: center; gap: 4px; padding: 5px; border-radius: 6px; background: #192538; color: var(--stat-color); font-size: 11px; }
+.growth-chip ion-icon { font-size: 13px; }
+.aptitude-grid { display: grid; gap: 9px; }
+.aptitude-group { min-width: 0; }
+.aptitude-group h3 { margin: 0 0 5px; color: #93a6c0; font-size: 10px; font-weight: 500; }
+.aptitude-chip { --rank-color: #a4adbf; display: inline-flex; align-items: center; gap: 5px; padding: 3px 6px; border: 1px solid var(--uc-border); border-radius: 6px; background: #162235; color: #aebed3; font-size: 10px; }
+.aptitude-chip strong { color: var(--rank-color); font-size: 12px; }
+[data-rank='S'] { --rank-color: #ffe083; }
+[data-rank='A'] { --rank-color: #ffb258; }
+[data-rank='B'] { --rank-color: #70acff; }
+[data-rank='C'] { --rank-color: #70d9e7; }
+[data-rank='D'] { --rank-color: #bda0f2; }
+[data-rank='E'] { --rank-color: #db9cf4; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) { .uma-card:hover { transform: translateY(-2px); box-shadow: 0 12px 28px #0004; } }
+@media (prefers-reduced-motion: reduce) { .uma-card { transition: none; } }
+@media (max-width: 767px) { .uma-image-container { height: 160px; } }
+@media (max-width: 359px) { .stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

@@ -1,13 +1,11 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, inject } from '@angular/core';
 import { ImageCacheService } from '../services/image-cache.service';
 import { ToastController } from '@ionic/angular';
 import { dataErrorMessage } from '../services/data-error';
 import { UmaService } from '../services/uma.service';
 import { AuthService } from '../services/auth.service';
-import { Uma, UmaStats } from '../models/uma.model';
-import { flash, heart, barbell, flame, school } from 'ionicons/icons';
+import { UmaCard } from './uma-card.component';
 
-type UmaCard = Uma & { statMode: 'base' | 'max' };
 
 @Component({
   selector: 'app-tab1',
@@ -16,15 +14,15 @@ type UmaCard = Uma & { statMode: 'base' | 'max' };
   standalone: false,
 })
 export class Tab1Page implements OnInit, OnDestroy {
+  filtersOpen = false;
+
+  @HostListener('window:resize')
+  onViewportResize() {
+    if (window.innerWidth >= 1200) this.filtersOpen = false;
+  }
+
   readonly imageCache = inject(ImageCacheService);
   imageStatus: string | null = null;
-  readonly statDefinitions: { key: keyof UmaStats; label: string; icon: string }[] = [
-    { key: 'speed', label: 'Speed', icon: flash },
-    { key: 'stamina', label: 'Stamina', icon: heart },
-    { key: 'power', label: 'Power', icon: barbell },
-    { key: 'guts', label: 'Guts', icon: flame },
-    { key: 'wit', label: 'Wit', icon: school }
-  ];
   umas: UmaCard[] = [];
   cargando: boolean = true;
   isOffline: boolean = false;
@@ -120,30 +118,6 @@ export class Tab1Page implements OnInit, OnDestroy {
       this.loadingRequest = false;
       if (!this.destroyed) this.cdr.detectChanges();
     }
-  }
-
-  /**
-   * Selección local: cambiar a 5★ no llama a la API ni altera Growth Rates/aptitudes.
-   * PHP agrupa base_* en baseStats y max_* en maxStats; también se admiten campos sueltos.
-   * null permite mostrar — cuando no hay dato, conservando los ceros válidos.
-   */
-  getStat(uma: UmaCard, stat: keyof UmaStats): number | null {
-    if (uma.statMode === 'max') {
-      return uma[`max_${stat}`] ?? uma.maxStats?.[stat] ?? null;
-    }
-    return uma[`base_${stat}`] ?? uma.baseStats?.[stat] ?? null;
-  }
-
-  /**
-   * Genera la representación en estrellas según la rareza de la Uma Musume
-   */
-  onImageError(event: Event) {
-    const image = event.target as HTMLImageElement;
-    if (!image.src.endsWith('/assets/shapes.svg')) image.src = 'assets/shapes.svg';
-  }
-
-  getRarityStars(rarity: number): string {
-    return '★'.repeat(rarity);
   }
 
   /**

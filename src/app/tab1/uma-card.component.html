@@ -1,0 +1,69 @@
+<ion-card class="uma-card">
+  <div class="uma-image-container">
+    <img [src]="uma.imageUrl" [alt]="uma.name" loading="lazy" (error)="onImageError($event)" /> 
+  </div>
+  <ion-card-header>
+    <div class="card-heading">
+      <ion-card-title>{{ uma.name }}</ion-card-title>
+      <ion-badge class="rarity-badge" [attr.aria-label]="(uma.rareza_base ?? uma.rarity) + ' estrellas'">
+        {{ getRarityStars(uma.rareza_base ?? uma.rarity) }}
+      </ion-badge>
+    </div>
+  </ion-card-header>
+  <ion-card-content>
+    <div class="stats-heading">
+      <h2>Estadísticas</h2>
+      <!-- El cambio es local: baseStats y maxStats ya llegaron en el mismo GET. -->
+      <ion-segment mode="ios" [(ngModel)]="uma.statMode" aria-label="Rareza de las estadísticas"> 
+        <ion-segment-button value="base"><ion-label>{{ uma.rareza_base }}★</ion-label></ion-segment-button>
+        <ion-segment-button value="max"><ion-label>5★</ion-label></ion-segment-button>
+      </ion-segment>
+    </div>
+    <div class="stat-grid" aria-live="polite">
+      <div class="stat-tile" *ngFor="let stat of statDefinitions" [attr.data-stat]="stat.key">
+        <span class="stat-label"><ion-icon [icon]="stat.icon" aria-hidden="true"></ion-icon>{{ stat.label }}</span>
+        <strong>{{ getStat(uma, stat.key) ?? '—' }}</strong>
+      </div>
+    </div>
+    <section class="growth-section" *ngIf="uma.growthRates" aria-label="Growth Rates">
+      <h2>Growth Rates</h2>
+      <div class="growth-row">
+        <div class="growth-chip" *ngFor="let stat of statDefinitions" [attr.data-stat]="stat.key" [class.is-zero]="uma.growthRates[stat.key] === 0">
+          <ion-icon [icon]="stat.icon" aria-hidden="true"></ion-icon>
+          <span class="sr-only">{{ stat.label }}</span>
+          <strong>+{{ uma.growthRates[stat.key] }}%</strong>
+        </div>
+      </div>
+    </section>
+    <section class="aptitude-section" aria-label="Aptitudes">
+      <h2>Aptitudes</h2>
+      <div class="aptitude-grid">
+        <div class="aptitude-group">
+          <h3>Surface</h3>
+          <div class="aptitudes-row">
+            <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.turf"><span>Turf</span><strong>{{ uma.aptitudes.turf }}</strong></span>
+            <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.dirt"><span>Dirt</span><strong>{{ uma.aptitudes.dirt }}</strong></span>
+          </div>
+        </div>
+        <div class="aptitude-group">
+          <h3>Distance</h3>
+          <div class="aptitudes-row">
+            <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.short"><span>Short</span><strong>{{ uma.aptitudes.short }}</strong></span>
+            <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.mile"><span>Mile</span><strong>{{ uma.aptitudes.mile }}</strong></span>
+            <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.medium"><span>Medium</span><strong>{{ uma.aptitudes.medium }}</strong></span>
+            <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.long"><span>Long</span><strong>{{ uma.aptitudes.long }}</strong></span>
+          </div>
+        </div>
+        <div class="aptitude-group">
+          <h3>Strategy</h3>
+          <div class="aptitudes-row">
+            <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.front"><span>Front</span><strong>{{ uma.aptitudes.front }}</strong></span>
+            <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.leader"><span>Leader</span><strong>{{ uma.aptitudes.leader }}</strong></span>
+            <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.betweener"><span>Betweener</span><strong>{{ uma.aptitudes.betweener }}</strong></span>
+            <span class="aptitude-chip" [attr.data-rank]="uma.aptitudes.chaser"><span>Chaser</span><strong>{{ uma.aptitudes.chaser }}</strong></span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </ion-card-content>
+</ion-card>

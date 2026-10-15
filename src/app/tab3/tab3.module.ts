@@ -1,4 +1,4 @@
-import { IonicModule } from '@ionic/angular/lazy';
+import { IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonTitle, IonToolbar } from '@ionic/angular';
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -9,7 +9,7 @@ import { Tab3PageRoutingModule } from './tab3-routing.module';
 
 @NgModule({
   imports: [
-    IonicModule,
+    IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonTitle, IonToolbar,
     CommonModule,
     FormsModule,
     ExploreContainerComponentModule,

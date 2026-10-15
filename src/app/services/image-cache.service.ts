@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { Directory, Filesystem } from '@capacitor/filesystem';
 import { Uma } from '../models/uma.model';
+import { getImageDownloadUrl } from './api.config';
 
 interface SavedImage {
   source: string;
@@ -58,7 +59,7 @@ export class ImageCacheService {
               let response;
               try {
                 response = await CapacitorHttp.get({
-                  url: uma.imageUrl, headers, responseType: 'arraybuffer',
+                  url: getImageDownloadUrl(uma.imageUrl), headers, responseType: 'arraybuffer',
                   connectTimeout: 5000, readTimeout: 5000,
                   webFetchExtra: { signal: AbortSignal.timeout(10000) }
                 });

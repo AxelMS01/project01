@@ -4,6 +4,10 @@ import { authGuard } from './guards/auth.guard';
 
 const routes: Routes = [
   {
+    path: 'contactos',
+    loadComponent: () => import('./contacts/contacts.page').then(m => m.ContactsPage)
+  },
+  {
     path: '',
     redirectTo: 'login',
     pathMatch: 'full'
