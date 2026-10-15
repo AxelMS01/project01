@@ -1,0 +1,22 @@
+[
+  {
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "status": 201
+  },
+  {
+    "method": "PUT",
+    "status": 200
+  },
+  {
+    "method": "DELETE",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "status": 200
+  }
+]

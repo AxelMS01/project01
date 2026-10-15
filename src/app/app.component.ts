@@ -15,7 +15,10 @@ import {
   refreshOutline,
   flashOutline,
   ribbonOutline,
-  mail
+  mail,
+  searchOutline, heartOutline, settingsOutline, personOutline,
+  chevronForwardOutline, gridOutline, gitNetworkOutline, copyOutline,
+  constructOutline, mailOutline, optionsOutline, closeOutline
 } from 'ionicons/icons';
 
 @Component({
@@ -27,6 +30,9 @@ import {
 export class AppComponent {
   constructor(public connection: ConnectionService) {
     addIcons({
+      searchOutline, heartOutline, settingsOutline, personOutline,
+      chevronForwardOutline, gridOutline, gitNetworkOutline, copyOutline,
+      constructOutline, mailOutline, optionsOutline, closeOutline,
       'logo-facebook': logoFacebook,
       'logo-google': logoGoogle,
       'logo-twitter': logoTwitter,
